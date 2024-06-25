@@ -1,0 +1,335 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Trace ESP Packet | zrfyun.top</title><meta name="author" content="zrf,853241825@qq.com"><meta name="copyright" content="zrf"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="分析一个ESP Packet在协议栈的input方向和output方向是如何处理的,仅仅涉及重要的函数名,用以显示调用关系与注册时机,不会陷入到具体的实现细节之中。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Trace ESP Packet">
+<meta property="og:url" content="http://zrfyun.top/2024/05/26/trace_esp/index.html">
+<meta property="og:site_name" content="zrfyun.top">
+<meta property="og:description" content="分析一个ESP Packet在协议栈的input方向和output方向是如何处理的,仅仅涉及重要的函数名,用以显示调用关系与注册时机,不会陷入到具体的实现细节之中。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zrfyun.top/blog_image/XFRM-state/ipsec.png">
+<meta property="article:published_time" content="2024-05-26T14:30:13.000Z">
+<meta property="article:modified_time" content="2024-05-29T11:16:35.904Z">
+<meta property="article:author" content="zrf">
+<meta property="article:tag" content="strongswan">
+<meta property="article:tag" content="xfrm-state">
+<meta property="article:tag" content="tunnel">
+<meta property="article:tag" content="ESP">
+<meta property="article:tag" content="XFRM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zrfyun.top/blog_image/XFRM-state/ipsec.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://zrfyun.top/2024/05/26/trace_esp/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Trace ESP Packet',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-05-29 19:16:35'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 7.0.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/blog_image/XFRM-state/ipsec.png')"><nav id="nav"><span id="blog-info"><a href="/" title="zrfyun.top"><span class="site-name">zrfyun.top</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Trace ESP Packet</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-05-26T14:30:13.000Z" title="发表于 2024-05-26 22:30:13">2024-05-26</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-05-29T11:16:35.904Z" title="更新于 2024-05-29 19:16:35">2024-05-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/IPSEC/">IPSEC</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>11分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Trace ESP Packet"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="一-简介"><a href="#一-简介" class="headerlink" title="一. 简介"></a>一. 简介</h2><p>本文详细分析一个ESP Packet在协议栈的input方向和output方向是如何处理的。先讲述相对简单的output方向，再讲述复杂一点的input方向。</p>
+<p>本文仅仅涉及重要的函数名，用以显示调用关系与注册时机，不会陷入到具体的实现细节之中。</p>
+<h3 id="1-1-网络拓扑"><a href="#1-1-网络拓扑" class="headerlink" title="1.1 网络拓扑"></a>1.1 网络拓扑</h3><p>本节中将使用传统的站点到站点的业务拓扑:</p>
+<p>moon站点保护子网10.1.0.0&#x2F;16，其中Alice是一个主机，IP地址为10.1.0.10&#x2F;16；</p>
+<p>sun站点保护子网10.2.0.0&#x2F;16，其中Bob是一个主机，IP地址为10.2.0.10&#x2F;16；</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">10.1.0.0/16 -- | 192.168.0.1 | === | 192.168.0.2 | -- 10.2.0.0/16</span><br><span class="line">  moon-net          moon                 sun           sun-net</span><br><span class="line">    |                                                       |</span><br><span class="line">10.1.0.10/16                                            10.2.0.10/16</span><br><span class="line">    Alice                                                   Bob</span><br></pre></td></tr></table></figure>
+
+<p>使用Alice ping Bob，我们在moon站点的192.168.0.1接口抓包。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">moon:~# tcpdump -ni eth0 esp or icmp</span><br><span class="line">09:30:24.456208 IP 192.168.0.1 &gt; 192.168.0.2: ESP(spi=0xc7aa5990,seq=0x3), length 120</span><br><span class="line">09:30:24.460150 IP 192.168.0.2 &gt; 192.168.0.1: ESP(spi=0xcbda26bb,seq=0x3), length 120</span><br><span class="line">09:30:24.462169 IP 10.2.0.10 &gt; 10.1.0.10: ICMP echo reply, id 58139, seq 1, length 64</span><br></pre></td></tr></table></figure>
+
+<p>我们也将按照这三个分组的时间顺序，来分析协议栈是如何处理数据包的。</p>
+<h3 id="1-2-先觉条件"><a href="#1-2-先觉条件" class="headerlink" title="1.2 先觉条件"></a>1.2 先觉条件</h3><p>了解IP、ESP的报文格式，可以去参考链接中熟悉一下。</p>
+<h3 id="1-3-参考链接"><a href="#1-3-参考链接" class="headerlink" title="1.3 参考链接"></a>1.3 参考链接</h3><p><a target="_blank" rel="noopener" href="https://docs.strongswan.org/docs/5.9/howtos/ipsecProtocol.html">Strongswan 中的 IPsec 协议简介</a></p>
+<h2 id="二-OUTPUT方向"><a href="#二-OUTPUT方向" class="headerlink" title="二. OUTPUT方向"></a>二. OUTPUT方向</h2><p>OUTPUT方向是针对moon站点来说的，moon站点将向sun站点发送ESP分组。</p>
+<p>我们是使用Alice ping Bob来产生ESP分组的。意味着moon站点的10.1.0.1接口将首先受到一个来自Alice设备的ICMP请求。源地址为10.1.0.10，目的地址为10.2.0.10。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">moon:~# tcpdump -ni eth1 icmp</span><br><span class="line">09:46:28.524684 IP 10.1.0.10 &gt; 10.2.0.10: ICMP echo request, id 43193, seq 1, length 64</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-1-查路由"><a href="#2-1-查路由" class="headerlink" title="2.1 查路由"></a>2.1 查路由</h3><p>moon站点在执行<code>ip_rcv_finish_core()</code>，在查路由的时候将ip_forward()注册到了<code>input</code>中</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">ip_rcv_finish() &#123;</span><br><span class="line">    ip_rcv_finish_core() &#123;</span><br><span class="line">        ip_route_input_noref() &#123;</span><br><span class="line">            ip_route_input_rcu() &#123;</span><br><span class="line">                ip_route_input_slow() &#123;</span><br><span class="line">                    ip_mkroute_input() &#123;</span><br><span class="line">                        __mkroute_input() &#123;</span><br><span class="line">                            rth-&gt;dst.input = ip_forward;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-2-ip-forward"><a href="#2-2-ip-forward" class="headerlink" title="2.2 ip_forward"></a>2.2 ip_forward</h3><p>OUTPUT方向上ESP的所有处理都将从<code>ip_forward()</code>开始。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ip_forward() &#123;</span><br><span class="line">    xfrm4_route_forward()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="1-xfrm4-route-forward"><a href="#1-xfrm4-route-forward" class="headerlink" title="1. xfrm4_route_forward"></a>1. xfrm4_route_forward</h4><p>在转发时，会在xfrm policy中查询分组是否需要进入XFRM流程。</p>
+<p>此时，我们需要处理的分组是这样子的：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">09:46:28.524684 IP 10.1.0.10 &gt; 10.2.0.10: ICMP echo request, id 43193, seq 1, length 64</span><br></pre></td></tr></table></figure>
+
+<p>我们可以使用<code>ip xfrm policy get src 10.1.0.0/16 dst 10.2.0.0/16 dir out</code>来查看当前XFRM策略</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">moon:~# ip xfrm policy get src 10.1.0.0/16 dst 10.2.0.0/16 dir out</span><br><span class="line">src 10.1.0.0/16 dst 10.2.0.0/16 </span><br><span class="line">    dir out priority 383615 ptype main </span><br><span class="line">    tmpl src 192.168.0.1 dst 192.168.0.2</span><br><span class="line">        proto esp spi 0xc6121b90 reqid 1 mode tunnel</span><br></pre></td></tr></table></figure>
+
+<p>可以发现，在OUT方向上，这个分组与xfrm policy是匹配的。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">ip_forward() &#123;</span><br><span class="line">    xfrm4_route_forward() &#123;</span><br><span class="line">        xfrm_route_forward() &#123;</span><br><span class="line">            __xfrm_route_forward() &#123;</span><br><span class="line">                xfrm_lookup() &#123;</span><br><span class="line">                    xfrm_lookup_with_ifid() &#123;</span><br><span class="line">                        xfrm_bundle_lookup() &#123;</span><br><span class="line">                            xfrm_resolve_and_create_bundle() &#123;</span><br><span class="line">                                xfrm_bundle_create()</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-xfrm4-output"><a href="#2-xfrm4-output" class="headerlink" title="2. xfrm4_output"></a>2. xfrm4_output</h4><p>匹配到XFRM策略后，将进入XFRM框架。</p>
+<p>我们可以使用<code>ip xfrm policy get src 10.1.0.0/16 dst 10.2.0.0/16 dir out</code>来查看当前XFRM策略的templates：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">moon:~# ip xfrm policy get src 10.1.0.0/16 dst 10.2.0.0/16 dir out</span><br><span class="line">src 10.1.0.0/16 dst 10.2.0.0/16 </span><br><span class="line">    dir out priority 383615 ptype main </span><br><span class="line">    tmpl src 192.168.0.1 dst 192.168.0.2</span><br><span class="line">        proto esp spi 0xc6121b90 reqid 1 mode tunnel</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，这个策略的templates是<code>tmpl src 192.168.0.1 dst 192.168.0.2</code>。</p>
+<p>XFRM框架会将我们的Packet信息与tmpl进行匹配，最终找到或创建一个XFRM State实例。</p>
+<p>通过这个XFRM State就可以找到afinfo注册的回调函数<code>afinfo-&gt;output</code>。</p>
+<p>这个output函数是在<code>xfrm4_state_init()</code>的时候，通过<code>xfrm_state_register_afinfo()</code>把<code>xfrm4_state_afinfo</code>注册到了<code>xfrm_state_afinfo</code>中。</p>
+<p>而afinfo-&gt;output就是<code>xfrm4_output</code>。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">xfrm_resolve_and_create_bundle() &#123;</span><br><span class="line">    xfrm_tmpl_resolve() &#123;</span><br><span class="line">        xfrm_tmpl_resolve_one() &#123;</span><br><span class="line">            xfrm_state_find() &#123;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    xfrm_bundle_create() &#123;</span><br><span class="line">        inner_mode = &amp;xfrm[i]-&gt;inner_mode;</span><br><span class="line">        afinfo = xfrm_state_afinfo_get_rcu(inner_mode-&gt;family);</span><br><span class="line">        /* xfrm4_output() */</span><br><span class="line">        dst1-&gt;output = afinfo-&gt;output;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-xfrm-output"><a href="#3-xfrm-output" class="headerlink" title="3. xfrm_output"></a>3. xfrm_output</h4><p>接下来进入<code>xfrm4_output()</code>流程。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">xfrm4_output() &#123;</span><br><span class="line">    __xfrm4_output() &#123;</span><br><span class="line">        xfrm_output()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-xfrm-output-one"><a href="#4-xfrm-output-one" class="headerlink" title="4. xfrm_output_one"></a>4. xfrm_output_one</h4><p>在xfrm_output_one中，会根据xfrm state来对ICMP Packet作封装。</p>
+<p>我们可以查看与这个Packet匹配的XFRM State，可以发现，mode为tunnel，意味着XFRM框架会对这个PACKET作一层外侧封装。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">    外层IP                      内层IP</span><br><span class="line">|192.168.0.1  192.168.0.2 | 10.1.0.10 10.2.0.10 |</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">moon:~# ip xfrm state list src 192.168.0.1 dst 192.168.0.2 proto esp</span><br><span class="line">src 192.168.0.1 dst 192.168.0.2</span><br><span class="line">    proto esp spi 0xcb29792e reqid 1 mode tunnel</span><br><span class="line">    replay-window 0 flag af-unspec</span><br><span class="line">    aead rfc4106(gcm(aes)) 0x2847cc697e65aae5dbe32300f31810896c22f23a 128</span><br><span class="line">    lastused 2024-05-22 01:35:45</span><br><span class="line">    anti-replay context: seq 0x0, oseq 0x1, bitmap 0x00000000</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">xfrm_output() &#123;</span><br><span class="line">    xfrm_output_resume() &#123;</span><br><span class="line">        xfrm_output_one() &#123;</span><br><span class="line">            /* 此处完成tunnel封装 */</span><br><span class="line">            xfrm_outer_mode_output()</span><br><span class="line">        &#125;</span><br><span class="line">        skb_dst(skb)-&gt;ops-&gt;local_out(net, sk, skb);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="5-xfrm-register-type"><a href="#5-xfrm-register-type" class="headerlink" title="5. xfrm_register_type"></a>5. xfrm_register_type</h4><p>此时，我们已经为PACKET作了tunnel分装，接下来，将会进入ESP模块，对Packet进行加密处理。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">xfrm_output_one() &#123;</span><br><span class="line">    /* 此处完成tunnel封装 */</span><br><span class="line">    xfrm_outer_mode_output()</span><br><span class="line"></span><br><span class="line">    xfrm_type_output() &#123;</span><br><span class="line">        /* esp_output() */</span><br><span class="line">        x-&gt;type-&gt;output(x, skb)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个x-&gt;type-&gt;output是在ESP模块初始化时，通过<code>xfrm_register_type()</code>注册到<code>xfrm_state_get_afinfo(family)</code>中去的。</p>
+<p>在创建XFRM State实例的时候，注册到了x-&gt;type字段。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">__xfrm_init_state() &#123;</span><br><span class="line">    x-&gt;type = xfrm_get_type(x-&gt;id.proto, family);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那么，此时<code>x-&gt;type-&gt;output(x, skb)</code>其实就是在调用<code>esp_output()</code></p>
+<h4 id="6-esp-output"><a href="#6-esp-output" class="headerlink" title="6. esp_output"></a>6. esp_output</h4><p>在此处，会在内层IP和外层IP之间插入ESP Header，并添加ESP tail，并对ESP有效载荷作加密处理。</p>
+<p><img src="/blog_image/trace_esp/01.png" alt="IPsec Tunnel Mode"></p>
+<h4 id="7-ip-local-out"><a href="#7-ip-local-out" class="headerlink" title="7. __ip_local_out"></a>7. __ip_local_out</h4><p>至此，网络层的所有处理已经完成，将会调用协议栈的<code>__ip_local_out()</code>将这个SKB发往下一层，这里就不是我们关注的重点了。</p>
+<p>ESP在OUTPUT方向上经过的所有关键函数已经全部罗列了出来。</p>
+<h3 id="2-3-总结"><a href="#2-3-总结" class="headerlink" title="2.3 总结"></a>2.3 总结</h3><p>moon站点在eth0接口收到一个ICMP报文，经过了XFRM协议栈，向sun站点发送一个ESP报文。至此，第一个ESP报文的生命流程已经解释完毕。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">moon:~# tcpdump -ni eth0 esp or icmp</span><br><span class="line">09:30:24.456208 IP 192.168.0.1 &gt; 192.168.0.2: ESP(spi=0xc7aa5990,seq=0x3), length 120</span><br><span class="line">09:30:24.460150 IP 192.168.0.2 &gt; 192.168.0.1: ESP(spi=0xcbda26bb,seq=0x3), length 120</span><br><span class="line">09:30:24.462169 IP 10.2.0.10 &gt; 10.1.0.10: ICMP echo reply, id 58139, seq 1, length 64</span><br></pre></td></tr></table></figure>
+
+<p><img src="/blog_image/trace_esp/02.jpg" alt="IPsec ESP Tunnel Mode"></p>
+<h2 id="三-INPUT方向"><a href="#三-INPUT方向" class="headerlink" title="三. INPUT方向"></a>三. INPUT方向</h2><p>moon站点向sun站点发送了ESP Packet，紧接着，收到了来自sun站点的回复。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">09:30:24.460150 IP 192.168.0.2 &gt; 192.168.0.1: ESP(spi=0xcbda26bb,seq=0x3), length 120</span><br></pre></td></tr></table></figure>
+
+<p>接下来，我们将分析这个Packet是如何进入moon站点的XFRM协议栈的。</p>
+<h3 id="3-1-ip-local-deliver-finish"><a href="#3-1-ip-local-deliver-finish" class="headerlink" title="3.1 ip_local_deliver_finish"></a>3.1 ip_local_deliver_finish</h3><p>同样，当Packet进入网络层，查询路由，发现目的地址为本地地址，于是进入ip_local_deliver函数继续将数据包发送至上一层。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">netif_receive_skb_list_internal() &#123;</span><br><span class="line">    __netif_receive_skb_list_core() &#123;</span><br><span class="line">        ip_list_rcv() &#123;</span><br><span class="line">            ip_local_deliver_finish()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-xfrm4-esp-rcv"><a href="#3-2-xfrm4-esp-rcv" class="headerlink" title="3.2 xfrm4_esp_rcv"></a>3.2 xfrm4_esp_rcv</h3><p><code>ip_protocol_deliver_rcu</code>根据ip_hdr(skb)-&gt;protocol来选择应该调用哪个处理函数来继续解析Packet。</p>
+<p>由于IP层内是ESP Header，那么ip_hdr(skb)-&gt;protocol就是IPPROTO_ESP(50)。所以就会调用IPPROTO_ESP的hander处理函数xfrm4_esp_rcv。</p>
+<p>xfrm4_esp_rcv通过xfrm4_protocol_register注册到inet_protos[IPPROTO_ESP]。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ip_local_deliver_finish() &#123;</span><br><span class="line">    ip_protocol_deliver_rcu() &#123;</span><br><span class="line">        ipprot = rcu_dereference(inet_protos[protocol]);</span><br><span class="line">        /* xfrm4_esp_rcv */</span><br><span class="line">        ipprot-&gt;handler();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-xfrm4-rcv"><a href="#3-3-xfrm4-rcv" class="headerlink" title="3.3 xfrm4_rcv"></a>3.3 xfrm4_rcv</h3><p>xfrm4_rcv通过<code>xfrm4_protocol_register()</code>将<code>esp4_protocol</code>注册到<code>struct xfrm4_protocol</code>handler链表中。xfrm4_esp_rcv将遍历hander链表，执行处理函数。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">xfrm4_esp_rcv() &#123;</span><br><span class="line">    for_each_protocol_rcu(esp4_handlers, handler)</span><br><span class="line">    &#123;</span><br><span class="line">        /* xfrm4_rcv */</span><br><span class="line">        handler-&gt;handler(skb);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-xfrm-input"><a href="#3-4-xfrm-input" class="headerlink" title="3.4 xfrm_input"></a>3.4 xfrm_input</h3><p>xfrm_input函数是INPUT方向最核心的处理函数。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">xfrm4_rcv() &#123;</span><br><span class="line">    xfrm4_rcv_spi() &#123;</span><br><span class="line">        xfrm_input()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="1-xfrm-state-lookup"><a href="#1-xfrm-state-lookup" class="headerlink" title="1. xfrm_state_lookup"></a>1. xfrm_state_lookup</h4><p>此时，协议栈正在处理报文格式是这样的：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">09:30:24.460150 IP 192.168.0.2 &gt; 192.168.0.1: ESP(spi=0xcbda26bb,seq=0x3), length 120</span><br></pre></td></tr></table></figure>
+
+<p>XFRM框架将会把这个Packet和XFRM State进行对比，查找到匹配的XFRM State。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">moon:~# ip x s list src 192.168.0.2 dst 192.168.0.1 proto esp</span><br><span class="line">src 192.168.0.2 dst 192.168.0.1</span><br><span class="line">    proto esp spi 0xc0a1c17e reqid 1 mode tunnel</span><br><span class="line">    replay-window 32 flag af-unspec</span><br><span class="line">    aead rfc4106(gcm(aes)) 0xf507bc1f40d1ff250eeb93b566940d89f0a2abbd 128</span><br><span class="line">    anti-replay context: seq 0x0, oseq 0x0, bitmap 0x00000000</span><br></pre></td></tr></table></figure>
+
+<p>可以发现这个Packet匹配到了存储解密ESP方法的XFRM State。</p>
+<p>至此，我们就可以通过这个XFRM State进入ESP模块，解密ESP消息。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">xfrm_input() &#123;</span><br><span class="line">    xfrm_state_lookup()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-esp-input"><a href="#2-esp-input" class="headerlink" title="2. esp_input"></a>2. esp_input</h4><p>所有解密ESP Packet的线索都存在了XFRM State中，包括了解密方法。</p>
+<p>解密方法存储来type-&gt;input中。而type是在创建XFRM state时初始化的。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">__xfrm_init_state() &#123;</span><br><span class="line">    x-&gt;type = xfrm_get_type(x-&gt;id.proto, family);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">xfrm_input() &#123;</span><br><span class="line">    xfrm_state_lookup()</span><br><span class="line">    xfrm_type_input() &#123;</span><br><span class="line">        x = xfrm_input_state();</span><br><span class="line">        /* esp_input */</span><br><span class="line">        x-&gt;type-&gt;input();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这个函数中，将解密ESP消息，并且剥离<code>ESP header</code>和<code>ESP tail</code>。</p>
+<h4 id="3-xfrm-inner-mode-input"><a href="#3-xfrm-inner-mode-input" class="headerlink" title="3. xfrm_inner_mode_input"></a>3. xfrm_inner_mode_input</h4><p>至此，Packet的状态是这样的：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">    外层IP                      内层IP</span><br><span class="line">|192.168.0.2  192.168.0.1 | 10.2.0.10 10.1.0.10 |</span><br></pre></td></tr></table></figure>
+
+<p><code>xfrm_inner_mode_input()</code>将会脱去外层IP，我们就得到了一个从10.2.0.10发往10.1.0.10的ICMP Packet。这也就是第三个数据包：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">09:30:24.462169 IP 10.2.0.10 &gt; 10.1.0.10: ICMP echo reply, id 58139, seq 1, length 64</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-xfrm-rcv-cb"><a href="#4-xfrm-rcv-cb" class="headerlink" title="4. xfrm_rcv_cb"></a>4. xfrm_rcv_cb</h4><p>剥离ESP封装后，将进入xfrm_rcv_cb流程。</p>
+<p>xfrm_rcv_cb通过<code>xfrm_input_register_afinfo(&amp;xfrm4_input_afinfo)</code>注册到afinfo中。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">xfrm_input() &#123;</span><br><span class="line">    xfrm_state_lookup()</span><br><span class="line">    xfrm_type_input()</span><br><span class="line">    xfrm_inner_mode_input()</span><br><span class="line">    xfrm_rcv_cb() &#123;</span><br><span class="line">        afinfo = xfrm_input_get_afinfo(family, is_ipip);</span><br><span class="line">        /* xfrm4_rcv_cb */</span><br><span class="line">        ret = afinfo-&gt;callback(skb, protocol, err);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>接下来，分析<code>xfrm4_rcv_cb</code>作了什么：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">xfrm4_rcv_cb() &#123;</span><br><span class="line">    struct xfrm4_protocol __rcu **head = proto_handlers(protocol);</span><br><span class="line">    for_each_protocol_rcu(*head, handler)</span><br><span class="line">    &#123;</span><br><span class="line">        /* esp4_rcv_cb */</span><br><span class="line">        handler-&gt;cb_handler(skb, err)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其实esp4_rcv_cb中什么都没有作，仅仅直接返回了0。</p>
+<h4 id="5-gro-cells-receive"><a href="#5-gro-cells-receive" class="headerlink" title="5. gro_cells_receive"></a>5. gro_cells_receive</h4><p>至此，我们已经完整地从ESP Packet中，解析到了ICMP Packet。接下来，需要让这个ICMP Packet重走协议栈即可。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">xfrm_input() &#123;</span><br><span class="line">    xfrm_state_lookup()</span><br><span class="line">    xfrm_type_input()</span><br><span class="line">    xfrm_inner_mode_input()</span><br><span class="line">    xfrm_rcv_cb()</span><br><span class="line">    gro_cells_receive() &#123;</span><br><span class="line">        cell = this_cpu_ptr(gcells-&gt;cells);</span><br><span class="line">        __skb_queue_tail(&amp;cell-&gt;napi_skbs, skb);</span><br><span class="line">        napi_schedule(&amp;cell-&gt;napi);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这里，把新的ICMP Packet加入到cell-&gt;napi_skbs的队尾。并唤起NET_RX_SOFTIRQ中断。</p>
+<h3 id="3-5-总结"><a href="#3-5-总结" class="headerlink" title="3.5 总结"></a>3.5 总结</h3><p>moon站点在eth0接口收到一个ESP报文，首先通过ip_local_deliver发现是ESP Packet，接着进入了XFRM协议栈，进行ESP解密、ESP解封装、tunnel解封装，把内层的IP Packet追加的napi_skbs的队尾，唤起软中断，让ICMP Packet重走协议栈。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">moon:~# tcpdump -ni eth0 esp or icmp</span><br><span class="line">09:30:24.456208 IP 192.168.0.1 &gt; 192.168.0.2: ESP(spi=0xc7aa5990,seq=0x3), length 120</span><br><span class="line">09:30:24.460150 IP 192.168.0.2 &gt; 192.168.0.1: ESP(spi=0xcbda26bb,seq=0x3), length 120</span><br><span class="line">09:30:24.462169 IP 10.2.0.10 &gt; 10.1.0.10: ICMP echo reply, id 58139, seq 1, length 64</span><br></pre></td></tr></table></figure>
+
+<p><img src="/blog_image/trace_esp/03.jpg" alt="IPsec ESP Tunnel Mode"></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://zrfyun.top">zrf</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://zrfyun.top/2024/05/26/trace_esp/">http://zrfyun.top/2024/05/26/trace_esp/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://zrfyun.top" target="_blank">zrfyun.top</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/strongswan/">strongswan</a><a class="post-meta__tags" href="/tags/xfrm-state/">xfrm-state</a><a class="post-meta__tags" href="/tags/tunnel/">tunnel</a><a class="post-meta__tags" href="/tags/ESP/">ESP</a><a class="post-meta__tags" href="/tags/XFRM/">XFRM</a></div><div class="post_share"><div class="social-share" data-image="/blog_image/XFRM-state/ipsec.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>感谢支持</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat_pay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat_pay.jpg"/></a><div class="post-qr-code-desc"></div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/06/08/MakefileTutorial/" title="Makefile Tutorial"><img class="cover" src="/blog_image/Makefile/1.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Makefile Tutorial</div></div></a></div><div class="next-post pull-right"><a href="/2024/03/30/IKEv1_pubkey_auth/" title="IKEv1中的证书认证详述(SM2国密证书)"><img class="cover" src="/blog_image/20231203-01/cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">IKEv1中的证书认证详述(SM2国密证书)</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2023/12/11/XFRM-state/" title="XFRM state"><img class="cover" src="/blog_image/XFRM-state/ipsec.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-11</div><div class="title">XFRM state</div></div></a></div><div><a href="/2023/12/03/20231203-01/" title="非对称加密算法与CA机构"><img class="cover" src="/blog_image/20231203-01/cover.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-03</div><div class="title">非对称加密算法与CA机构</div></div></a></div><div><a href="/2024/03/30/IKEv1_pubkey_auth/" title="IKEv1中的证书认证详述(SM2国密证书)"><img class="cover" src="/blog_image/20231203-01/cover.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-30</div><div class="title">IKEv1中的证书认证详述(SM2国密证书)</div></div></a></div><div><a href="/2024/01/19/vici/" title="Versatile IKE Control Interface"><img class="cover" src="/blog_image/XFRM-state/ipsec.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-01-19</div><div class="title">Versatile IKE Control Interface</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">zrf</div><div class="author-info__description">求知若渴,虚心若愚</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/zrf-1998"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/zrf-1998" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:853241825@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">蹒跚学步，感谢支持</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80-%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">一. 简介</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E7%BD%91%E7%BB%9C%E6%8B%93%E6%89%91"><span class="toc-number">1.1.</span> <span class="toc-text">1.1 网络拓扑</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E5%85%88%E8%A7%89%E6%9D%A1%E4%BB%B6"><span class="toc-number">1.2.</span> <span class="toc-text">1.2 先觉条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-number">1.3.</span> <span class="toc-text">1.3 参考链接</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C-OUTPUT%E6%96%B9%E5%90%91"><span class="toc-number">2.</span> <span class="toc-text">二. OUTPUT方向</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E6%9F%A5%E8%B7%AF%E7%94%B1"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 查路由</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-ip-forward"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 ip_forward</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-xfrm4-route-forward"><span class="toc-number">2.2.1.</span> <span class="toc-text">1. xfrm4_route_forward</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-xfrm4-output"><span class="toc-number">2.2.2.</span> <span class="toc-text">2. xfrm4_output</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-xfrm-output"><span class="toc-number">2.2.3.</span> <span class="toc-text">3. xfrm_output</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-xfrm-output-one"><span class="toc-number">2.2.4.</span> <span class="toc-text">4. xfrm_output_one</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-xfrm-register-type"><span class="toc-number">2.2.5.</span> <span class="toc-text">5. xfrm_register_type</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-esp-output"><span class="toc-number">2.2.6.</span> <span class="toc-text">6. esp_output</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#7-ip-local-out"><span class="toc-number">2.2.7.</span> <span class="toc-text">7. __ip_local_out</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E6%80%BB%E7%BB%93"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89-INPUT%E6%96%B9%E5%90%91"><span class="toc-number">3.</span> <span class="toc-text">三. INPUT方向</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-ip-local-deliver-finish"><span class="toc-number">3.1.</span> <span class="toc-text">3.1 ip_local_deliver_finish</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-xfrm4-esp-rcv"><span class="toc-number">3.2.</span> <span class="toc-text">3.2 xfrm4_esp_rcv</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-xfrm4-rcv"><span class="toc-number">3.3.</span> <span class="toc-text">3.3 xfrm4_rcv</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-xfrm-input"><span class="toc-number">3.4.</span> <span class="toc-text">3.4 xfrm_input</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-xfrm-state-lookup"><span class="toc-number">3.4.1.</span> <span class="toc-text">1. xfrm_state_lookup</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-esp-input"><span class="toc-number">3.4.2.</span> <span class="toc-text">2. esp_input</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-xfrm-inner-mode-input"><span class="toc-number">3.4.3.</span> <span class="toc-text">3. xfrm_inner_mode_input</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-xfrm-rcv-cb"><span class="toc-number">3.4.4.</span> <span class="toc-text">4. xfrm_rcv_cb</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-gro-cells-receive"><span class="toc-number">3.4.5.</span> <span class="toc-text">5. gro_cells_receive</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-5-%E6%80%BB%E7%BB%93"><span class="toc-number">3.5.</span> <span class="toc-text">3.5 总结</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url('/url(http:/zrfyun.top/img/back.jpeg)')"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2024 By zrf</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a href="http://zrfyun.top/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><div class="js-pjax"><script>(() => {
+  const initValine = () => {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'mHV5QZzhNBabMj6y5kw2SYqq-gzGzoHsz',
+      appKey: '2fvaL99PG3kQNK15rc70qhMV',
+      avatar: 'monsterid',
+      serverURLs: 'https://mhv5qzzh.lc-cn-n1-shared.com',
+      emojiMaps: "",
+      path: window.location.pathname,
+      visitor: false
+    }, null))
+  }
+
+  const loadValine = async () => {
+    if (typeof Valine === 'function') initValine()
+    else {
+      await getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js')
+      initValine()
+    }
+  }
+
+  if ('Valine' === 'Valine' || !false) {
+    if (false) btf.loadComment(document.getElementById('vcomment'),loadValine)
+    else setTimeout(loadValine, 0)
+  } else {
+    window.loadOtherComment = loadValine
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

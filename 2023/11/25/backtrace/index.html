@@ -1,0 +1,339 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>基于backtrace和BFD的栈回溯 | zrfyun.top</title><meta name="author" content="zrf,853241825@qq.com"><meta name="copyright" content="zrf"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="编写一个用户态的dump_stack()函数，以便查看复杂函数的调用栈，甚至可以定位到库函数中的源文件与行号.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于backtrace和BFD的栈回溯">
+<meta property="og:url" content="http://zrfyun.top/2023/11/25/backtrace/index.html">
+<meta property="og:site_name" content="zrfyun.top">
+<meta property="og:description" content="编写一个用户态的dump_stack()函数，以便查看复杂函数的调用栈，甚至可以定位到库函数中的源文件与行号.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zrfyun.top/blog_image/20231125-01/backtrace.jpg">
+<meta property="article:published_time" content="2023-11-25T00:32:24.000Z">
+<meta property="article:modified_time" content="2023-11-26T15:32:24.000Z">
+<meta property="article:author" content="zrf">
+<meta property="article:tag" content="backtrace">
+<meta property="article:tag" content="BFD">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zrfyun.top/blog_image/20231125-01/backtrace.jpg"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://zrfyun.top/2023/11/25/backtrace/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '基于backtrace和BFD的栈回溯',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-11-26 23:32:24'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 7.0.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/blog_image/20231125-01/backtrace.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="zrfyun.top"><span class="site-name">zrfyun.top</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">基于backtrace和BFD的栈回溯</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-11-25T00:32:24.000Z" title="发表于 2023-11-25 08:32:24">2023-11-25</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2023-11-26T15:32:24.000Z" title="更新于 2023-11-26 23:32:24">2023-11-26</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/C%E4%BB%A3%E7%A0%81%E8%B0%83%E8%AF%95/">C代码调试</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">3.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>14分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="基于backtrace和BFD的栈回溯"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="一-简介"><a href="#一-简介" class="headerlink" title="一. 简介"></a>一. 简介</h2><p>本文介绍一种<strong>在x86架构下</strong>，不使用任何外部调试工具(GDB等)，在程序发生异常时及时记录堆栈信息的方法，它可以定位到库文件的函数名和行号。</p>
+<ul>
+<li>本文先介绍backtrace系列函数，从而获取到函数调用栈的栈帧。</li>
+<li>再通过BFD库(二进制文件描述库)来分析ELF文件，找到<code>.text节</code>和<code>.debug_info节</code>。</li>
+<li>编写一个libtrace库，调试程序可以通过<code>backtrace_dump()</code>来查看函数调用栈。</li>
+<li>最后<a href="#segv_handler">注册SIGSEGV的信号处理函数</a>，通过libtrace定位到堆栈的源文件、函数名、行号</li>
+</ul>
+<h2 id="二-backtrace"><a href="#二-backtrace" class="headerlink" title="二. backtrace"></a>二. backtrace</h2><p>本节的内容源自<code>man 3 backtrace</code>，原文中有一个测试程序，感兴趣可以去实际运行一下代码。</p>
+<h3 id="2-1-函数原型"><a href="#2-1-函数原型" class="headerlink" title="2.1 函数原型"></a>2.1 函数原型</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;execinfo.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">backtrace</span><span class="params">(<span class="type">void</span> *buffer[.size], <span class="type">int</span> size)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">char</span> **<span class="title function_">backtrace_symbols</span><span class="params">(<span class="type">void</span> *<span class="type">const</span> buffer[.size], <span class="type">int</span> size)</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-2-backtrace"><a href="#2-2-backtrace" class="headerlink" title="2.2 backtrace()"></a>2.2 backtrace()</h3><p><code>backtrace()</code>将回溯信息存放在buffer数组中。回溯信息包含一系列当前线程活跃的函数调用。buffer中的每个成员记录了函数(指令)的返回地址。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">buffer:[100]</span><br><span class="line">    [0]: 0x7ffff7fbf913</span><br><span class="line">    [1]: 0x7ffff7fbf9cb</span><br><span class="line">    [2]: 0x7ffff7fb9126</span><br><span class="line">    [3]: 0x7ffff7fb9137</span><br><span class="line">    [4]: 0x7ffff7fb9148</span><br><span class="line">    [5]: 0x555555555161</span><br><span class="line">    [6]: 0x7ffff7df31ca</span><br><span class="line">    [7]: 0x7ffff7df3285</span><br><span class="line">    [8]: 0x555555555081</span><br><span class="line">    [9]: 0x0</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-3-backtrace-symbols"><a href="#2-3-backtrace-symbols" class="headerlink" title="2.3 backtrace_symbols()"></a>2.3 backtrace_symbols()</h3><p><code>backtrace_symbols()</code>将buffer中的一系列地址转换为易读的字符串。其中包含父函数名称、子函数(指令)在父亲函数中的的偏移、子函数的实际返回地址。</p>
+<p>这里少了两层调用栈是因为我跳过了<code>backtrace_dump()</code>的调用栈打印</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">strings:[]</span><br><span class="line">    [0]: /home/zrf/git/study/utils/libtest.so(+0x1126) [0x7f2f83880126]</span><br><span class="line">    [1]: /home/zrf/git/study/utils/libtest.so(+0x1137) [0x7f2f83880137]</span><br><span class="line">    [2]: /home/zrf/git/study/utils/libtest.so(func_name1+0xe) [0x7f2f83880148]</span><br><span class="line">    [3]: ./main(main+0x18) [0x55d657aa8161]</span><br><span class="line">    [4]: /lib/x86_64-linux-gnu/libc.so.6(+0x271ca) [0x7f2f836ba1ca]</span><br><span class="line">    [5]: /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x85) [0x7f2f836ba285]</span><br><span class="line">    [6]: ./main(_start+0x21) [0x55d657aa8081]</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-4-注意事项"><a href="#2-4-注意事项" class="headerlink" title="2.4 注意事项"></a>2.4 注意事项</h3><ul>
+<li>这两个函数都是线程安全的</li>
+<li>想要获得更符合源码的调用栈信息，CC编译时需要不进行优化（指定-O0）</li>
+<li>内联函数没有栈指针</li>
+<li>不使用特定的链接选项<code>-rdynamic</code><strong>可能</strong>会无法显示函数名称</li>
+<li>被定义为<code>static</code>的函数无法显示函数名</li>
+</ul>
+<h3 id="2-5-测试程序"><a href="#2-5-测试程序" class="headerlink" title="2.5 测试程序"></a>2.5 测试程序</h3><p>在库libtest.so中，函数<code>func_name3()</code>调用<code>backtrace()</code>系列函数，将打印此时调用栈信息。<br>请注意<code>func_name2()</code>和<code>func_name3()</code>都被定义为了<code>static</code>类型，所以<code>backtrace_symbols()</code>无法显示函数名。<br><img src="/blog_image/20231125-01/01.png" alt="测试流程图"></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Debug backtrace: func_name3 backtrace</span><br><span class="line"> dumping 7 stack frame addresses:</span><br><span class="line">    /home/zrf/git/study/utils/libtest.so(+0x1126) [0x7f7433a15126]</span><br><span class="line">    /home/zrf/git/study/utils/libtest.so(+0x1137) [0x7f7433a15137]</span><br><span class="line">    /home/zrf/git/study/utils/libtest.so(func_name1+0xe) [0x7f7433a15148]</span><br><span class="line">    ./main(main+0x18) [0x55f9d9be8161]</span><br><span class="line">    /lib/x86_64-linux-gnu/libc.so.6(+0x271ca) [0x7f743384f1ca]</span><br><span class="line">    /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x85) [0x7f743384f285]</span><br><span class="line">    ./main(_start+0x21) [0x55f9d9be8081]</span><br></pre></td></tr></table></figure>
+
+<h2 id="三-BFD"><a href="#三-BFD" class="headerlink" title="三. BFD"></a>三. BFD</h2><p>BFD库（二进制文件描述库）是GNU项目用于解决不同格式的目标文件的可移植性的主要机制。</p>
+<p>以下内容摘自<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Binary_File_Descriptor_library">BFD</a></p>
+<ul>
+<li><p>BFD通过对目标文件提供公共抽象视图来达成工作。一个目标文件有带有描述信息的一个“头”；可变量目的“段”，每个段都有一个名字、一些属性和一块数据；一个符号表；一组重定位入口项；诸如此类。</p>
+</li>
+<li><p>在内部，BFD将数据从抽象视图转换到目标处理器和文件格式所要求的位&#x2F;字节布局的细节。它的关键服务包括处理字节序差异，比如在小端序主机和大端序目标之间，在32-bit和64-bit数据之间的正确转换，和重定位入口项所指定的寻址算术的细节。</p>
+</li>
+<li><p>尽管BFD最初设计成为可以被各种工具使用的通用库，频繁需要修补API来容纳新系统的功能，倾向于限制了它的使用；BFD的主要用户是GNU汇编器（GAS），GNU连接器（GLD），和其他GNU二进制实用程序（”binutils”）工具，和GNU调试器（GDB）。因此，BFD不单独发行，总是包括在binutils和GDB发行之中。不论如何，BFD是将GNU工具用于嵌入式系统开发的关键部件。</p>
+</li>
+<li><p>BFD库可以用来读取核心转储的结构化数据。</p>
+</li>
+</ul>
+<h3 id="3-1-dladdr"><a href="#3-1-dladdr" class="headerlink" title="3.1 dladdr()"></a>3.1 dladdr()</h3><p><code>dladdr()</code>检测给定的地址是否”合法”，如果合法，就返回一个Dl_info的结构，现在解释一下这个结构体中每个字段的含义：</p>
+<h4 id="1-结构体"><a href="#1-结构体" class="headerlink" title="1. 结构体"></a>1. 结构体</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="comment">/* </span></span><br><span class="line"><span class="comment">     *  动态链接库的路径名。这是一个指向字符串的指针</span></span><br><span class="line"><span class="comment">     *  例如 &quot;/home/zrf/git/study/utils/libtest.so&quot; </span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> *dli_fname;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     *  动态链接库在虚拟内存中的基地址</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="type">void</span>       *dli_fbase;  </span><br><span class="line"></span><br><span class="line">    <span class="comment">/* </span></span><br><span class="line"><span class="comment">     *  父函数的名称</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> *dli_sname;  </span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     *  父函数在虚拟内存中的地址</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="type">void</span>       *dli_saddr;  </span><br><span class="line">&#125; Dl_info;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-举例讲解dladdr"><a href="#2-举例讲解dladdr" class="headerlink" title="2. 举例讲解dladdr"></a>2. 举例讲解dladdr</h4><p>我举一个详细的例子来讲解这个结构体</p>
+<p>在libtest.so中，我定义了一个名为<code>func_name1()</code>的函数，他的代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">func_name1</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    func_name2();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>接下来描述这个函数被调用时的栈信息：</p>
+<ul>
+<li>0x7ffff7fb8000附近有ELF格式信息</li>
+<li>0x7ffff7fb8394附近有函数名字符串</li>
+<li>0x7ffff7fb913a附近有函数的具体指令</li>
+</ul>
+<p><img src="/blog_image/20231125-01/02.png" alt="func1_name stack info"></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">两个字符串指针：</span><br><span class="line">    dli_fname字段指向了libtest.so的绝对路径</span><br><span class="line">    dli_sname字段指向了函数的名称&quot;func_name1&quot;</span><br><span class="line">两个地址指针：</span><br><span class="line">    dli_saddr字段指向了函数func_name1()的汇编指令起始地址。</span><br><span class="line">    dli_fbase字段指向了libtest.so在虚拟内存的地址</span><br></pre></td></tr></table></figure>
+
+<p>我们再看下<code>backtrace()</code>的buffer字段中的地址值0x7ffff7fb9148</p>
+<p><img src="/blog_image/20231125-01/03.png" alt="frames value"></p>
+<p>再结合func_name1()的汇编指令来观察：</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">000000000000113a &lt;func_name1&gt;:</span><br><span class="line">    113a:       <span class="number">55</span>                      <span class="keyword">push</span>   %rbp</span><br><span class="line">    113b:       <span class="number">48</span> <span class="number">89</span> e5                <span class="keyword">mov</span>    %rsp,%rbp</span><br><span class="line">    113e:       b8 <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span>          <span class="keyword">mov</span>    <span class="number">$0</span>x0,%eax</span><br><span class="line">    <span class="number">1143</span>:       e8 e1 ff ff ff          <span class="keyword">call</span>   <span class="number">1129</span> &lt;func_name2&gt;</span><br><span class="line">    <span class="number">1148</span>:       <span class="number">90</span>                      <span class="keyword">nop</span></span><br><span class="line">    <span class="number">1149</span>:       <span class="number">5d</span>                      <span class="keyword">pop</span>    %rbp</span><br><span class="line">    114a:       c3                      <span class="keyword">ret</span></span><br></pre></td></tr></table></figure>
+
+<p>可以发现指令<code>90 5D C3</code>就是<code>func_name1()</code>执行完调用<code>func_name2()</code>（<code>call   1129 &lt;func_name2&gt;</code>）后要执行的指令。到此为止，我们应该就可以<strong>利用这些指针的相对位置，来定位调用栈的行号了</strong>。</p>
+<p>我们可以使用<code>backtrace()</code>的buffer字段中的地址值<code>0x7ffff7fb9148</code>来减去这个库文件的基地址<code>0x7ffff7fb8000</code>，得到一个偏移<code>0x1148</code>，结合刚刚的汇编指令，可以发现这个地址刚好就是从<code>func_name2()</code>返回后要执行的指令所在地址。</p>
+<h4 id="3-addr2line"><a href="#3-addr2line" class="headerlink" title="3. addr2line"></a>3. addr2line</h4><p>在介绍libbdf之前我们先介绍一个工具来查看指令所在的行——addr2line<br>查看刚刚打印的堆栈信息</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Debug backtrace: func_name3 backtrace</span><br><span class="line"> dumping 7 stack frame addresses:</span><br><span class="line">    /home/zrf/git/study/utils/libtest.so(+0x1126) [0x7f7433a15126]</span><br><span class="line">    /home/zrf/git/study/utils/libtest.so(+0x1137) [0x7f7433a15137]</span><br><span class="line">    /home/zrf/git/study/utils/libtest.so(func_name1+0xe) [0x7f7433a15148]</span><br><span class="line">    ./main(main+0x18) [0x55f9d9be8161]</span><br><span class="line">    /lib/x86_64-linux-gnu/libc.so.6(+0x271ca) [0x7f743384f1ca]</span><br><span class="line">    /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x85) [0x7f743384f285]</span><br><span class="line">    ./main(_start+0x21) [0x55f9d9be8081]</span><br></pre></td></tr></table></figure>
+
+<p>例如：我们想看func_name1中具体是从哪一行调用了<code>backtrace()</code><br>我们已经拿到了库文件的路径，也拿到了指令在库函数中的位置<code>func_name1+0xe</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用addr2line查看行号</span></span><br><span class="line">zrf@debian:~/git/study/utils$ addr2line -e /home/zrf/git/study/utils/libtest.so func_name1+0xe -f -p </span><br><span class="line">func_name1 at /home/zrf/git/study/utils/libtest.c:17</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-libbfd"><a href="#3-2-libbfd" class="headerlink" title="3.2 libbfd"></a>3.2 libbfd</h3><p>我们暂时总结一下现在收集到的栈信息(可以结合上文中提到的栈图片来观察)：</p>
+<ul>
+<li>libtest库的地址: <code>0x7ffff7fb8000</code></li>
+<li>父函数字符串: <code>0x7ffff7fb8394</code></li>
+<li>父函数完整的汇编指令: <code>0x7ffff7fb913a</code></li>
+<li>子函数回溯栈指针: <code>0x7ffff7fb9148</code></li>
+</ul>
+<p>接下来，我们将<strong>使用这些地址信息</strong>，并<strong>结合libbfd库</strong>，来<strong>定位</strong>回溯栈地址对应的指令所在的<strong>源文件、函数名和代码行</strong>。</p>
+<h4 id="1-ELF文件格式"><a href="#1-ELF文件格式" class="headerlink" title="1. ELF文件格式"></a>1. ELF文件格式</h4><p>我将ELF文件分为五个部分:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">elf_file</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="comment">/* ELF 文件头 */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">elf_header</span>;</span></span><br><span class="line">    <span class="comment">/* 段表 */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">program_header_table</span>;</span></span><br><span class="line">    <span class="comment">/* 节表 */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">section_header_table</span>;</span></span><br><span class="line">    <span class="comment">/* 本地符号表 */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sysbol_table</span>;</span></span><br><span class="line">    <span class="comment">/* 动态链接符号表 */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">dynamic_symbol_table</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>我们首先要做的就是找到ELF文件的符号表并记录下来，再找到当前指令的调试信息在符号表中的偏移，我们拿着符号表和偏移地址就可以找到找到.debug_info、.debug_line等信息，这些节中就包含当前指令地址所对应的源码文件、函数名和行号。<br>我们可以通过<code>readelf --debug libtest.so</code>来查看</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">    &lt;2b7&gt;   DW_AT_external    : 1</span><br><span class="line">    &lt;2b7&gt;   DW_AT_name        : (indirect string, offset: 0x2e): func_name3</span><br><span class="line">    <span class="comment"># 文件entry，可以通过File Name Table来索引到源文件</span></span><br><span class="line">    &lt;2bb&gt;   DW_AT_decl_file   : 1</span><br><span class="line">    <span class="comment"># 行号</span></span><br><span class="line">    &lt;2bb&gt;   DW_AT_decl_line   : 4</span><br><span class="line">    &lt;2bc&gt;   DW_AT_decl_column : 6</span><br><span class="line">    &lt;2bc&gt;   DW_AT_low_pc      : 0x1129</span><br><span class="line">    &lt;2c4&gt;   DW_AT_high_pc     : 0x20</span><br><span class="line">    &lt;2cc&gt;   DW_AT_frame_base  : 1 byte block: 9c        (DW_OP_call_frame_cfa)</span><br><span class="line">    &lt;2ce&gt;   DW_AT_call_all_tail_calls: 1</span><br><span class="line"></span><br><span class="line">The File Name Table (offset 0x38, lines 7, columns 2):</span><br><span class="line">  Entry Dir     Name</span><br><span class="line">  0     0       (indirect line string, offset: 0): libtest.c</span><br><span class="line">  1     0       (indirect line string, offset: 0): libtest.c</span><br><span class="line">  2     1       (indirect line string, offset: 0x99): stddef.h</span><br><span class="line">  3     2       (indirect line string, offset: 0xa2): types.h</span><br><span class="line">  4     3       (indirect line string, offset: 0xaa): struct_FILE.h</span><br><span class="line">  5     3       (indirect line string, offset: 0xb1): FILE.h</span><br><span class="line">  6     0       (indirect line string, offset: 0xb8): backtrace.h</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-BFD重要的函数"><a href="#2-BFD重要的函数" class="headerlink" title="2. BFD重要的函数"></a>2. BFD重要的函数</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 通过文件名创建一个bfd实例 */</span></span><br><span class="line">bfd *<span class="title function_">bfd_openr</span> <span class="params">(<span class="type">const</span> <span class="type">char</span> *filename, <span class="type">const</span> <span class="type">char</span> *target)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 获取符号表大小的宏定义 */</span></span><br><span class="line">bfd_get_dynamic_symtab_upper_bound(abfd)</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 获取动态链接符号表的宏定义 */</span></span><br><span class="line">bfd_canonicalize_dynamic_symtab(abfd, asymbols)</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 获取本地链接符号表的宏定义 */</span></span><br><span class="line">bfd_canonicalize_symtab(abfd, location)</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 遍历每一个节，并调用func进行处理 */</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">bfd_map_over_sections</span></span><br><span class="line">   <span class="params">(bfd *abfd,</span></span><br><span class="line"><span class="params">    <span class="type">void</span> (*func) (bfd *abfd, asection *sect, <span class="type">void</span> *obj),</span></span><br><span class="line"><span class="params">    <span class="type">void</span> *obj)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* </span></span><br><span class="line"><span class="comment"> *  通过bfd实例、.text节、符号表、指令相对于符号表的偏移，</span></span><br><span class="line"><span class="comment"> *  来获取文件名、函数名、行号</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> bfd_find_nearest_line(abfd, sec, syms, off, file, func, <span class="keyword">line</span>)</span></span><br></pre></td></tr></table></figure>
+
+<p>我们来看下libtrace库中最重要的函数<code>backtrace_dump()</code>流程图</p>
+<p><img src="/blog_image/20231125-01/04.png" alt="find nearest line"></p>
+<h3 id="3-3-最终效果"><a href="#3-3-最终效果" class="headerlink" title="3.3 最终效果"></a>3.3 最终效果</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Debug backtrace: func_name3 backtrace</span><br><span class="line"> dumping 7 stack frame addresses:</span><br><span class="line">  /home/zrf/git/study/utils/libtest.so @ 0x7fc3c8714000 [0x7fc3c8715126]</span><br><span class="line">    -&gt; <span class="built_in">source</span> file[/home/zrf/git/study/utils/libtest.c] <span class="keyword">function</span>[func_name3] line[7]</span><br><span class="line">  /home/zrf/git/study/utils/libtest.so @ 0x7fc3c8714000 [0x7fc3c8715137]</span><br><span class="line">    -&gt; <span class="built_in">source</span> file[/home/zrf/git/study/utils/libtest.c] <span class="keyword">function</span>[func_name2] line[12]</span><br><span class="line">  /home/zrf/git/study/utils/libtest.so @ 0x7fc3c8714000 (func_name1+0xe) [0x7fc3c8715148]</span><br><span class="line">    -&gt; <span class="built_in">source</span> file[/home/zrf/git/study/utils/libtest.c] <span class="keyword">function</span>[func_name1] line[17]</span><br><span class="line">  ./main @ 0x55d2d7f65000 (main+0x18) [0x55d2d7f66161]</span><br><span class="line">  /lib/x86_64-linux-gnu/libc.so.6 @ 0x7fc3c8522000 [0x7fc3c85491ca]</span><br><span class="line">    -&gt; <span class="built_in">source</span> file[./csu/../sysdeps/x86/libc-start.c] <span class="keyword">function</span>[__libc_start_call_main] line[74]</span><br><span class="line">  /lib/x86_64-linux-gnu/libc.so.6 @ 0x7fc3c8522000 (__libc_start_main+0x85) [0x7fc3c8549285]</span><br><span class="line">    -&gt; <span class="built_in">source</span> file[./csu/../csu/libc-start.c] <span class="keyword">function</span>[call_init] line[128]</span><br><span class="line">  ./main @ 0x55d2d7f65000 (_start+0x21) [0x55d2d7f66081]</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-总结"><a href="#3-4-总结" class="headerlink" title="3.4 总结"></a>3.4 总结</h3><p>我们可以使用这种方法更加准确的定位到库文件的源码名称、函数名（<code>backtrace_symbols()</code>是无法显示被定义为<code>static</code>类型的函数名的，但是我们这个方法可以拿到函数名）、以及行号。</p>
+<p>我将这种方法编译为了一个动态库——libtrace.so，如果想使用这个功能，在希望打印调用栈时调用<code>backtrace_dump()</code>就可以了</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* </span></span><br><span class="line"><span class="comment"> *  char *label:    一个标记</span></span><br><span class="line"><span class="comment"> *  FILE *file：    调用栈的输出流，如果为NULL，则输出到stderr</span></span><br><span class="line"><span class="comment"> *  bool detailed:  是否显示行号</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">backtrace_dump</span><span class="params">(<span class="type">char</span> *label, FILE *file, <span class="type">bool</span> detailed)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>由于libtrace只对库文件中的符号表做了打印行号的功能，所以针对本地的符号是不打印行号的（如果有必要的话，当然后续可以继续完善）。</p>
+<h2 id="四-通过信号处理函数打印调用栈"><a href="#四-通过信号处理函数打印调用栈" class="headerlink" title="四. 通过信号处理函数打印调用栈"></a>四. 通过信号处理函数打印调用栈</h2><p>开发中，难免会遇到堆栈情况，除了gdb外，我们也可以注册SIGSEGV信号的信号处理函数，如果发生堆栈，则打印调用栈</p>
+<p>看下代码：</p>
+<p><code>main()</code>函数中会调用<code>terrible_function()</code>,他在一个名为libtest.so的库中，并且这个函数会产生堆栈。</p>
+<span id="segv_handler">
+
+<ul>
+<li><code>main()</code>函数</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;backtrace.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">extern</span> <span class="type">void</span> <span class="title function_">terrible_function</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">segv_handler</span><span class="params">(<span class="type">int</span> signal)</span></span><br><span class="line">&#123;</span><br><span class="line">  backtrace_dump(<span class="string">&quot;SIGSEGV&quot;</span>, <span class="literal">NULL</span>, <span class="literal">true</span>);</span><br><span class="line">  <span class="built_in">abort</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  backtrace_init();</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* 信号处理 */</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">sigaction</span> <span class="title">action</span>;</span></span><br><span class="line">  action.sa_handler = segv_handler;</span><br><span class="line">  sigaction(SIGSEGV, &amp;action, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* 异常函数 */</span></span><br><span class="line">  terrible_function();</span><br><span class="line"></span><br><span class="line">  backtrace_deinit();</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>libtest.so中的terrible_function()</code></li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">terrible_function</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, __LINE__);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>看下运行效果：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">zrf@debian:~/git/study/utils$ ./main </span><br><span class="line">Debug backtrace: SIGSEGV</span><br><span class="line"> dumping 10 stack frame addresses:</span><br><span class="line">  ./main @ 0x557de421b000 [0x557de421c1ad]</span><br><span class="line">  /lib/x86_64-linux-gnu/libc.so.6 @ 0x7f3cc9464000 [0x7f3cc949ffd0]</span><br><span class="line">    -&gt; <span class="built_in">source</span> file[libc_sigaction.c] <span class="keyword">function</span>[__restore_rt] line[0]</span><br><span class="line">  /lib/x86_64-linux-gnu/libc.so.6 @ 0x7f3cc9464000 [0x7f3cc95cb618]</span><br><span class="line">    -&gt; <span class="built_in">source</span> file[./string/../sysdeps/x86_64/multiarch/strlen-evex.S] <span class="keyword">function</span>[__strlen_evex] line[79]</span><br><span class="line">  /lib/x86_64-linux-gnu/libc.so.6 @ 0x7f3cc9464000 [0x7f3cc94c2168]</span><br><span class="line">    -&gt; <span class="built_in">source</span> file[./stdio-common/./stdio-common/vfprintf-process-arg.c] <span class="keyword">function</span>[__vfprintf_internal] line[397]</span><br><span class="line">  /lib/x86_64-linux-gnu/libc.so.6 @ 0x7f3cc9464000 (_IO_printf+0xab) [0x7f3cc94b656b]</span><br><span class="line">    -&gt; <span class="built_in">source</span> file[./stdio-common/./stdio-common/printf.c] <span class="keyword">function</span>[__printf] line[37]</span><br><span class="line">  /home/zrf/git/study/utils/libtest.so @ 0x7f3cc9656000 (terrible_function+0x1d) [0x7f3cc9657126]</span><br><span class="line">    -&gt; <span class="built_in">source</span> file[/home/zrf/git/study/utils/libtest.c] <span class="keyword">function</span>[terrible_function] line[6]</span><br><span class="line">  ./main @ 0x557de421b000 (main+0x46) [0x557de421c1f8]</span><br><span class="line">  /lib/x86_64-linux-gnu/libc.so.6 @ 0x7f3cc9464000 [0x7f3cc948b1ca]</span><br><span class="line">    -&gt; <span class="built_in">source</span> file[./csu/../sysdeps/x86/libc-start.c] <span class="keyword">function</span>[__libc_start_call_main] line[74]</span><br><span class="line">  /lib/x86_64-linux-gnu/libc.so.6 @ 0x7f3cc9464000 (__libc_start_main+0x85) [0x7f3cc948b285]</span><br><span class="line">    -&gt; <span class="built_in">source</span> file[./csu/../csu/libc-start.c] <span class="keyword">function</span>[call_init] line[128]</span><br><span class="line">  ./main @ 0x557de421b000 (_start+0x21) [0x557de421c0c1]</span><br><span class="line">Aborted</span><br></pre></td></tr></table></figure>
+
+<p>可以发现我们获取了完整的调用栈，可以定位到<code>source file[/home/zrf/git/study/utils/libtest.c] function[terrible_function] line[6]</code>这个函数出了问题</p>
+<h2 id="五-libtrace"><a href="#五-libtrace" class="headerlink" title="五. libtrace"></a>五. libtrace</h2><p>本节将介绍libtrace库的代码实现。</p>
+<h3 id="5-1-backtrace"><a href="#5-1-backtrace" class="headerlink" title="5.1 backtrace()"></a>5.1 backtrace()</h3><p>这里不做赘述，请直接参考<code>man 3 backtrace</code>，我们的目的就是通过这个函数拿到栈帧。</p>
+<h3 id="5-2-dladdr"><a href="#5-2-dladdr" class="headerlink" title="5.2 dladdr()"></a>5.2 dladdr()</h3><p>已经很详细的讲解了这个函数，请回顾<code>3.1 节</code>。我们的目的是通过这个函数拿到动态库在内存中的基地址，使用栈帧减去基地址得到指令在动态库中的偏移。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">dladdr(this-&gt;frames[i], &amp;info);</span><br><span class="line"><span class="type">void</span> *ptr = this-&gt;frames[i];</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="built_in">strstr</span>(info.dli_fname, <span class="string">&quot;.so&quot;</span>))</span><br><span class="line">&#123;</span><br><span class="line">  ptr = (<span class="type">void</span>*)(this-&gt;frames[i] - info.dli_fbase);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-3-print-sourceline"><a href="#5-3-print-sourceline" class="headerlink" title="5.3 print_sourceline()"></a>5.3 print_sourceline()</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* </span></span><br><span class="line"><span class="comment"> * 这个是打印行号的入口函数 </span></span><br><span class="line"><span class="comment"> * file：输出流，如果为NULL，则输出到stderr</span></span><br><span class="line"><span class="comment"> * filename：库文件的绝对路径</span></span><br><span class="line"><span class="comment"> * ptr：指令在动态库中的偏移</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">print_sourceline</span><span class="params">(FILE *file, <span class="type">char</span> *filename, <span class="type">void</span> *ptr)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>这个函数中有三个重要步骤</p>
+<ul>
+<li>在缓存中查找是否存在动态库的bfd实例，如果存在则返回实例，否则创建一个实例，并加入缓存</li>
+<li>调用<code>bfd_map_over_sections()</code>遍历每个节，找到.text</li>
+<li>在.text节中使用<code>bfd_find_nearest_line()</code>来获取源文件、函数名、行号</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">pthread_mutex_lock(&amp;bfd_mutex);</span><br><span class="line"><span class="comment">/* 从哈希表中查找filename对应的bfd实例（这里使用的是uthash.h） */</span></span><br><span class="line">entry = get_bfd_entry(filename);</span><br><span class="line"><span class="keyword">if</span> (entry)</span><br><span class="line">&#123;</span><br><span class="line">  data-&gt;entry = entry;</span><br><span class="line">  <span class="comment">/* 遍历每个节, 对每个节调用find_addr函数 */</span></span><br><span class="line">  bfd_map_over_sections(entry-&gt;abfd, (<span class="type">void</span>*)find_addr, data);</span><br><span class="line">&#125;</span><br><span class="line">pthread_mutex_unlock(&amp;bfd_mutex);</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">find_addr</span><span class="params">(bfd *abfd, asection *section, <span class="type">bfd_find_data_t</span> *data)</span></span><br><span class="line">&#123;</span><br><span class="line">  vma = bfd_section_vma(section);</span><br><span class="line">  </span><br><span class="line">  <span class="comment">/* 获取源文件、函数名、行号 */</span></span><br><span class="line">  data-&gt;found = bfd_find_nearest_line(abfd, section, data-&gt;entry-&gt;syms,</span><br><span class="line">                  data-&gt;vma - vma, &amp;source, &amp;function, &amp;line);</span><br><span class="line"></span><br><span class="line">  println(data-&gt;file, <span class="string">&quot;    -&gt; source file[%s] function[%s] line[%d]\n&quot;</span>, source, function, line);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-4-源码下载连接"><a href="#5-4-源码下载连接" class="headerlink" title="5.4 源码下载连接"></a>5.4 源码下载连接</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/zrf-1998/study/tree/main/utils">github链接</a></li>
+<li><a href="http://zrfyun.top/source/backtrace.tar.gz">直接下载</a></li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://zrfyun.top">zrf</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://zrfyun.top/2023/11/25/backtrace/">http://zrfyun.top/2023/11/25/backtrace/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://zrfyun.top" target="_blank">zrfyun.top</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/backtrace/">backtrace</a><a class="post-meta__tags" href="/tags/BFD/">BFD</a></div><div class="post_share"><div class="social-share" data-image="/blog_image/20231125-01/backtrace.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>感谢支持</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat_pay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat_pay.jpg"/></a><div class="post-qr-code-desc"></div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/12/03/20231203-01/" title="非对称加密算法与CA机构"><img class="cover" src="/blog_image/20231203-01/cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">非对称加密算法与CA机构</div></div></a></div><div class="next-post pull-right"><a href="/2023/11/20/20231120-02/" title="Markdown基础语法"><img class="cover" src="/blog_image/20231120-02/Markdown-mark.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Markdown基础语法</div></div></a></div></nav><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">zrf</div><div class="author-info__description">求知若渴,虚心若愚</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/zrf-1998"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/zrf-1998" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:853241825@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">蹒跚学步，感谢支持</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80-%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">一. 简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C-backtrace"><span class="toc-number">2.</span> <span class="toc-text">二. backtrace</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E5%87%BD%E6%95%B0%E5%8E%9F%E5%9E%8B"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 函数原型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-backtrace"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 backtrace()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-backtrace-symbols"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 backtrace_symbols()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="toc-number">2.4.</span> <span class="toc-text">2.4 注意事项</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-%E6%B5%8B%E8%AF%95%E7%A8%8B%E5%BA%8F"><span class="toc-number">2.5.</span> <span class="toc-text">2.5 测试程序</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89-BFD"><span class="toc-number">3.</span> <span class="toc-text">三. BFD</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-dladdr"><span class="toc-number">3.1.</span> <span class="toc-text">3.1 dladdr()</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-number">3.1.1.</span> <span class="toc-text">1. 结构体</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E4%B8%BE%E4%BE%8B%E8%AE%B2%E8%A7%A3dladdr"><span class="toc-number">3.1.2.</span> <span class="toc-text">2. 举例讲解dladdr</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-addr2line"><span class="toc-number">3.1.3.</span> <span class="toc-text">3. addr2line</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-libbfd"><span class="toc-number">3.2.</span> <span class="toc-text">3.2 libbfd</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-ELF%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F"><span class="toc-number">3.2.1.</span> <span class="toc-text">1. ELF文件格式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-BFD%E9%87%8D%E8%A6%81%E7%9A%84%E5%87%BD%E6%95%B0"><span class="toc-number">3.2.2.</span> <span class="toc-text">2. BFD重要的函数</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E6%9C%80%E7%BB%88%E6%95%88%E6%9E%9C"><span class="toc-number">3.3.</span> <span class="toc-text">3.3 最终效果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E6%80%BB%E7%BB%93"><span class="toc-number">3.4.</span> <span class="toc-text">3.4 总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B-%E9%80%9A%E8%BF%87%E4%BF%A1%E5%8F%B7%E5%A4%84%E7%90%86%E5%87%BD%E6%95%B0%E6%89%93%E5%8D%B0%E8%B0%83%E7%94%A8%E6%A0%88"><span class="toc-number">4.</span> <span class="toc-text">四. 通过信号处理函数打印调用栈</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94-libtrace"><span class="toc-number">5.</span> <span class="toc-text">五. libtrace</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-backtrace"><span class="toc-number">5.1.</span> <span class="toc-text">5.1 backtrace()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-dladdr"><span class="toc-number">5.2.</span> <span class="toc-text">5.2 dladdr()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-print-sourceline"><span class="toc-number">5.3.</span> <span class="toc-text">5.3 print_sourceline()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-%E6%BA%90%E7%A0%81%E4%B8%8B%E8%BD%BD%E8%BF%9E%E6%8E%A5"><span class="toc-number">5.4.</span> <span class="toc-text">5.4 源码下载连接</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url('/url(http:/zrfyun.top/img/back.jpeg)')"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2024 By zrf</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a href="http://zrfyun.top/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><div class="js-pjax"><script>(() => {
+  const initValine = () => {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'mHV5QZzhNBabMj6y5kw2SYqq-gzGzoHsz',
+      appKey: '2fvaL99PG3kQNK15rc70qhMV',
+      avatar: 'monsterid',
+      serverURLs: 'https://mhv5qzzh.lc-cn-n1-shared.com',
+      emojiMaps: "",
+      path: window.location.pathname,
+      visitor: false
+    }, null))
+  }
+
+  const loadValine = async () => {
+    if (typeof Valine === 'function') initValine()
+    else {
+      await getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js')
+      initValine()
+    }
+  }
+
+  if ('Valine' === 'Valine' || !false) {
+    if (false) btf.loadComment(document.getElementById('vcomment'),loadValine)
+    else setTimeout(loadValine, 0)
+  } else {
+    window.loadOtherComment = loadValine
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

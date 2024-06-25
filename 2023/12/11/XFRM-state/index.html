@@ -1,0 +1,424 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>XFRM state | zrfyun.top</title><meta name="author" content="zrf,853241825@qq.com"><meta name="copyright" content="zrf"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="介绍XFRM状态数据库，探讨站点到站点案例中ICMP报文的封装和加密过程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="XFRM state">
+<meta property="og:url" content="http://zrfyun.top/2023/12/11/XFRM-state/index.html">
+<meta property="og:site_name" content="zrfyun.top">
+<meta property="og:description" content="介绍XFRM状态数据库，探讨站点到站点案例中ICMP报文的封装和加密过程">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zrfyun.top/blog_image/XFRM-state/ipsec.png">
+<meta property="article:published_time" content="2023-12-11T06:16:46.000Z">
+<meta property="article:modified_time" content="2024-02-27T13:47:16.047Z">
+<meta property="article:author" content="zrf">
+<meta property="article:tag" content="strongswan">
+<meta property="article:tag" content="xfrm-state">
+<meta property="article:tag" content="tunnel">
+<meta property="article:tag" content="ESP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zrfyun.top/blog_image/XFRM-state/ipsec.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://zrfyun.top/2023/12/11/XFRM-state/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'XFRM state',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-02-27 21:47:16'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 7.0.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/blog_image/XFRM-state/ipsec.png')"><nav id="nav"><span id="blog-info"><a href="/" title="zrfyun.top"><span class="site-name">zrfyun.top</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">XFRM state</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-12-11T06:16:46.000Z" title="发表于 2023-12-11 14:16:46">2023-12-11</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-02-27T13:47:16.047Z" title="更新于 2024-02-27 21:47:16">2024-02-27</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/IPSEC/">IPSEC</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">4.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>18分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="XFRM state"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="一-简介"><a href="#一-简介" class="headerlink" title="一. 简介"></a>一. 简介</h2><p>在Linux内核中，XFRM被用作IPsec协议的框架。</p>
+<p>XFRM状态数据库存在于每个网络命名空间中。<br>这意味着在不同的网络命名空间中，可以存在不同的XFRM状态，它们之间相互隔离。这种设计使得在多个网络环境中同时运行IPsec等安全协议变得更加灵活和可行。</p>
+<p>本文主要介绍网络命名空间中的XFRM状态数据库中的<strong>XFRM state</strong>——<code>XFRM state</code>是用于存储IPsec安全关联信息的数据结构。</p>
+<ul>
+<li>网络命名空间下负责管理<code>xfrm state</code>的字段</li>
+<li>xfrm state的存储方式——链表和哈希表的初始化</li>
+<li>创建xfrm state</li>
+<li>注册xfrm state节点</li>
+<li>删除xfrm state节点</li>
+<li><strong>探讨站点到站点案例中 ICMP 报文的封装和加密过程</strong></li>
+</ul>
+<p>本文使用的<strong>内核版本为6.3.6</strong>。<br>本文中提到的命名空间均指网络命名空间或者netns。</p>
+<h2 id="二-netns下的XFRM"><a href="#二-netns下的XFRM" class="headerlink" title="二. netns下的XFRM"></a>二. netns下的XFRM</h2><p>网络命名空间(netns)是一种将网络资源隔离开来的机制，每个网络命名空间都有自己的网络设备、IP地址、路由表和其他网络相关的资源。如果内核编译选项开启了CONFIG_XFRM，那么在<code>struct net</code>中就会多个叫做<code>xfrm</code>的字段。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">net</span> &#123;</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> CONFIG_XFRM</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">netns_xfrm</span>   <span class="title">xfrm</span>;</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-1-netns中的xfrm-state"><a href="#2-1-netns中的xfrm-state" class="headerlink" title="2.1 netns中的xfrm state"></a>2.1 netns中的xfrm state</h3><p>本文主要介绍<code>struct netns_xfrm</code>结构体中与<code>xfrm state</code>相关字段。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">netns_xfrm</span> &#123;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">state_all</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">hlist_head</span>  __<span class="title">rcu</span> *<span class="title">state_bydst</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">hlist_head</span> __<span class="title">rcu</span> *<span class="title">state_bysrc</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">hlist_head</span> __<span class="title">rcu</span> *<span class="title">state_byspi</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">hlist_head</span> __<span class="title">rcu</span> *<span class="title">state_byseq</span>;</span></span><br><span class="line"> <span class="type">unsigned</span> <span class="type">int</span>  state_hmask;</span><br><span class="line"> <span class="type">unsigned</span> <span class="type">int</span>  state_num;</span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">work_struct</span> <span class="title">state_hash_work</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>每个netns下可以存在很多<code>xfrm state</code>节点，这些节点在被创建后都会注册到一个链表中。<br>为了<strong>快速地查找节点</strong>，内核会按照某些特定的查找方式将<code>xfrm state</code>节点加入到哈希表中。</p>
+<ul>
+<li><p><code>state_all</code>：是一个链表头，用于存储所有的XFRM state。</p>
+</li>
+<li><p><code>state_bydst</code>、<code>state_bysrc</code>、<code>state_byspi</code>、<code>state_byseq</code>：这些字段是指向哈希表头的指针，用于根据目的地地址、源地址、安全关联标识符（Security Association Identifier，SAID）和序列号来查找XFRM状态。</p>
+</li>
+<li><p><code>state_hmask</code>、<code>state_num</code>：state_hmask是一个哈希掩码，state_num是当前<code>xfrm state</code>的数量。</p>
+</li>
+<li><p><code>state_hash_work</code>：这是一个用于处理XFRM状态哈希表的工作队列。</p>
+</li>
+</ul>
+<h3 id="2-2-xfrm-state初始化"><a href="#2-2-xfrm-state初始化" class="headerlink" title="2.2 xfrm state初始化"></a>2.2 xfrm state初始化</h3><p>每当创建一个netns，都将调用<code>xfrm_state_init()</code>来对上一节提到的字段进行初始化。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> __net_init <span class="title function_">xfrm_state_init</span><span class="params">(<span class="keyword">struct</span> net *net)</span></span><br><span class="line">&#123;</span><br><span class="line"> <span class="type">unsigned</span> <span class="type">int</span> sz;</span><br><span class="line"></span><br><span class="line"> INIT_LIST_HEAD(&amp;net-&gt;xfrm.state_all);</span><br><span class="line"> sz = <span class="keyword">sizeof</span>(<span class="keyword">struct</span> hlist_head) * <span class="number">8</span>;</span><br><span class="line"> net-&gt;xfrm.state_bydst = xfrm_hash_alloc(sz);</span><br><span class="line"> net-&gt;xfrm.state_bysrc = xfrm_hash_alloc(sz);</span><br><span class="line"> net-&gt;xfrm.state_byspi = xfrm_hash_alloc(sz);</span><br><span class="line"> net-&gt;xfrm.state_byseq = xfrm_hash_alloc(sz);</span><br><span class="line"> net-&gt;xfrm.state_hmask = ((sz / <span class="keyword">sizeof</span>(<span class="keyword">struct</span> hlist_head)) - <span class="number">1</span>);</span><br><span class="line"> net-&gt;xfrm.state_num = <span class="number">0</span>;</span><br><span class="line"> INIT_WORK(&amp;net-&gt;xfrm.state_hash_work, xfrm_hash_resize);</span><br><span class="line"> <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="三-添加一个xfrm-state"><a href="#三-添加一个xfrm-state" class="headerlink" title="三. 添加一个xfrm state"></a>三. 添加一个xfrm state</h2><p>我们将以站点到站点的案例来分析xfrm state</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">10.1.0.0/16 -- | 192.168.0.1 | === | 192.168.0.2 | -- 10.2.0.0/16</span><br><span class="line">  moon-net          moon                 sun           sun-net</span><br></pre></td></tr></table></figure>
+
+<p>一对IPSEC VPN之间会建立两个xfrm state，在IKE(网络密钥交换)协议中我们也称为CHILD SA。一个是出方向的SA，一个是入方向的SA。<br>我在这里通过ip命令来查看一下moon站点的两个SA(xfrm state)</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">moon:~<span class="comment"># ip xfrm state</span></span><br><span class="line">src 192.168.0.1 dst 192.168.0.2</span><br><span class="line"> proto esp spi 0xc4828a4d reqid 1 mode tunnel</span><br><span class="line"> replay-window 0 flag af-unspec</span><br><span class="line"> aead rfc4106(gcm(aes)) 0x2235580fd327990c6a47fbd52092a5e6dd8e8ecd 128</span><br><span class="line"> anti-replay context: <span class="built_in">seq</span> 0x0, oseq 0x0, bitmap 0x00000000</span><br><span class="line">src 192.168.0.2 dst 192.168.0.1</span><br><span class="line"> proto esp spi 0xcc250164 reqid 1 mode tunnel</span><br><span class="line"> replay-window 32 flag af-unspec</span><br><span class="line"> aead rfc4106(gcm(aes)) 0x62f649ba190225498f4e5a9fe35b9e8a72b032ed 128</span><br><span class="line"> anti-replay context: <span class="built_in">seq</span> 0x0, oseq 0x0, bitmap 0x00000000</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>向内核发起创建SA是由IKE协议来负责的，这里我们不展开描述，我们将从IKE进程发出<code>XFRM_MSG_NEWSA</code>开始，来分析xfrm state节点的创建过程。</p>
+<h3 id="3-1-xfrm-state"><a href="#3-1-xfrm-state" class="headerlink" title="3.1 xfrm_state"></a>3.1 xfrm_state</h3><p>第二节我们介绍了一些管理xfrm state的字段，但都没有提及xfrm state节点的具体结构是什么样的。由于这个结构体比较大，本小结只会介绍最重要的一些字段。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">xfrm_state</span> &#123;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_id</span>  <span class="title">id</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_selector</span> <span class="title">sel</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_mark</span> <span class="title">mark</span>;</span></span><br><span class="line"></span><br><span class="line"> <span class="comment">/* Key manager bits */</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_state_walk</span> <span class="title">km</span>;</span></span><br><span class="line"></span><br><span class="line"> <span class="comment">/* Parameters of this state. */</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">  u8  mode;</span><br><span class="line">  <span class="type">xfrm_address_t</span> saddr;</span><br><span class="line"> &#125; props;</span><br><span class="line"></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_lifetime_cfg</span> <span class="title">lft</span>;</span></span><br><span class="line"></span><br><span class="line"> <span class="comment">/* Data for transformer */</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_algo_auth</span> *<span class="title">aalg</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_algo</span> *<span class="title">ealg</span>;</span></span><br><span class="line"> <span class="type">const</span> <span class="type">char</span>  *geniv;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/* Reference to data common to all the instances of this</span></span><br><span class="line"><span class="comment">  * transformer. */</span></span><br><span class="line"> <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_type</span> *<span class="title">type</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_mode</span> <span class="title">inner_mode</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_mode</span> <span class="title">outer_mode</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="1-id"><a href="#1-id" class="headerlink" title="1. id"></a>1. id</h4><p>每一个id都<strong>标识一个xfrm state</strong>，我们可以看下id由哪些参数构成：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">xfrm_id</span> &#123;</span></span><br><span class="line"> <span class="comment">/* 目的地址 */</span></span><br><span class="line"> <span class="type">xfrm_address_t</span> daddr;</span><br><span class="line"> <span class="comment">/* SPI（Security Parameter Index）是一种用于标识和区分安全关联（SA）的参数 */</span></span><br><span class="line"> __be32  spi;</span><br><span class="line"> <span class="comment">/* 常见的有IPPROTO_ESP(50)，IPPROTO_AH(51) */</span></span><br><span class="line"> __u8  proto;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-sel"><a href="#2-sel" class="headerlink" title="2. sel"></a>2. sel</h4><p>sel包含了一系列用于<strong>匹配数据包的条件</strong>，以便确定是否需要对数据包进行加密、认证或其他安全处理操作。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">xfrm_selector</span> &#123;</span></span><br><span class="line"> <span class="type">xfrm_address_t</span> daddr;</span><br><span class="line"> <span class="type">xfrm_address_t</span> saddr;</span><br><span class="line"> __be16 dport;</span><br><span class="line"> __be16 dport_mask;</span><br><span class="line"> __be16 sport;</span><br><span class="line"> __be16 sport_mask;</span><br><span class="line"> __u16 family;</span><br><span class="line"> __u8 prefixlen_d;</span><br><span class="line"> __u8 prefixlen_s;</span><br><span class="line"> __u8 proto;</span><br><span class="line"> <span class="type">int</span> ifindex;</span><br><span class="line"> <span class="type">__kernel_uid32_t</span> user;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-props"><a href="#3-props" class="headerlink" title="3. props"></a>3. props</h4><p>xfrm state的一些参数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">  <span class="comment">/* 区分传输模式和隧道模式 */</span></span><br><span class="line">  u8  mode;</span><br><span class="line">  <span class="comment">/* 源地址 */</span></span><br><span class="line">  <span class="type">xfrm_address_t</span> saddr;</span><br><span class="line"> &#125; props;</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-type"><a href="#4-type" class="headerlink" title="4. type"></a>4. type</h4><p>在<code>xfrm_get_type()</code>中，可以通过协议族和协议号来获取到相关的type，我的理解是type决定了安全关联的种类，常见的type如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_type</span> <span class="title">esp_type</span> =</span></span><br><span class="line">&#123;</span><br><span class="line"> .owner  = THIS_MODULE,</span><br><span class="line"> .proto       = IPPROTO_ESP,</span><br><span class="line"> .flags  = XFRM_TYPE_REPLAY_PROT,</span><br><span class="line"> .init_state = esp_init_state,</span><br><span class="line"> .destructor = esp_destroy,</span><br><span class="line"> .input  = esp_input,</span><br><span class="line"> .output  = esp_output,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_type</span> <span class="title">ah_type</span> =</span></span><br><span class="line">&#123;</span><br><span class="line"> .owner  = THIS_MODULE,</span><br><span class="line"> .proto       = IPPROTO_AH,</span><br><span class="line"> .flags  = XFRM_TYPE_REPLAY_PROT,</span><br><span class="line"> .init_state = ah_init_state,</span><br><span class="line"> .destructor = ah_destroy,</span><br><span class="line"> .input  = ah_input,</span><br><span class="line"> .output  = ah_output</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>ESP（Encapsulating Security Payload）：<br>ESP协议提供了加密和认证机制，用于保护IP数据包的传输。它可以用于传输模式和隧道模式，并提供了对有效载荷的加密和认证功能。</p>
+</li>
+<li><p>AH（Authentication Header）：<br>AH协议提供了对IP数据包进行认证的机制，但不提供加密功能。AH可以用于传输模式和隧道模式，用于确保IP数据包的完整性和认证。</p>
+</li>
+</ul>
+<h4 id="5-算法相关"><a href="#5-算法相关" class="headerlink" title="5. 算法相关"></a>5. 算法相关</h4><p>xfrm state中还记录了加密和认证算法</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">xfrm_algo_auth</span> *<span class="title">aalg</span>;</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">xfrm_algo</span> *<span class="title">ealg</span>;</span></span><br><span class="line"><span class="type">const</span> <span class="type">char</span>  *geniv;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-创建一个state"><a href="#3-2-创建一个state" class="headerlink" title="3.2 创建一个state"></a>3.2 创建一个state</h3><p>用户空间可以通过netlink命令字<code>XFRM_MSG_NEWSA</code>和<code>XFRM_MSG_ALLOCSPI</code>创建一个state实例。</p>
+<ul>
+<li>首先<strong>检查用户空间的参数是否合法</strong></li>
+<li>其次<strong>创建state并</strong>向内核进行<strong>注册</strong></li>
+<li>最后调用通知链上的函数。</li>
+</ul>
+<p>我们主要关注创建state和向内核注册的过程。</p>
+<h4 id="1-创建state"><a href="#1-创建state" class="headerlink" title="1. 创建state"></a>1. 创建state</h4><p>在<code>xfrm_state_construct()</code>中会申请一块空间，并做一些默认初始化，然后将用户空间传入的参数拷贝到内核空间。拷贝的主要内容就是<code>3.1</code>节我们提到的一些字段。</p>
+<p>主要包括：</p>
+<ul>
+<li>id：用以唯一标识一个节点</li>
+<li>sel：流量筛选器</li>
+<li>props： xfrm state相关的参数，例如源地址、传输模式、隧道模式</li>
+<li>lft： 生存周期</li>
+<li>aalg：注册算法</li>
+<li>ealg：加密算法</li>
+<li>geniv：加密算法的初始化向量</li>
+</ul>
+<h4 id="2-初始化state"><a href="#2-初始化state" class="headerlink" title="2. 初始化state"></a>2. 初始化state</h4><p>接下来会根据目前已知的state信息，在<code>__xfrm_init_state()</code>做一些初始化。</p>
+<p>我们会根据用户空间对这个SA type的配置，来调用相关type的初始化函数。</p>
+<p>例如本例中用户要求的type为esp，协议族为IPv4，那么就会调用esp4模块注册的init_state回调函数。这里不再展开描述。</p>
+<h4 id="3-注册state"><a href="#3-注册state" class="headerlink" title="3. 注册state"></a>3. 注册state</h4><p>初始化完毕后，将会调用<code>__xfrm_state_insert()</code>将xfrm start节点进行注册。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> __xfrm_state_insert(<span class="keyword">struct</span> xfrm_state *x)</span><br><span class="line">&#123;</span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">net</span> *<span class="title">net</span> =</span> xs_net(x);</span><br><span class="line"></span><br><span class="line"> list_add(&amp;x-&gt;km.all, &amp;net-&gt;xfrm.state_all);</span><br><span class="line"></span><br><span class="line"> h = xfrm_dst_hash(net, &amp;x-&gt;id.daddr, &amp;x-&gt;props.saddr,</span><br><span class="line">     x-&gt;props.reqid, x-&gt;props.family);</span><br><span class="line"> XFRM_STATE_INSERT(bydst, &amp;x-&gt;bydst, net-&gt;xfrm.state_bydst + h,</span><br><span class="line">     x-&gt;xso.type);</span><br><span class="line"></span><br><span class="line"> h = xfrm_src_hash(net, &amp;x-&gt;id.daddr, &amp;x-&gt;props.saddr, x-&gt;props.family);</span><br><span class="line"> XFRM_STATE_INSERT(bysrc, &amp;x-&gt;bysrc, net-&gt;xfrm.state_bysrc + h,</span><br><span class="line">     x-&gt;xso.type);</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (x-&gt;id.spi) &#123;</span><br><span class="line">  h = xfrm_spi_hash(net, &amp;x-&gt;id.daddr, x-&gt;id.spi, x-&gt;id.proto,</span><br><span class="line">      x-&gt;props.family);</span><br><span class="line"></span><br><span class="line">  XFRM_STATE_INSERT(byspi, &amp;x-&gt;byspi, net-&gt;xfrm.state_byspi + h,</span><br><span class="line">      x-&gt;xso.type);</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (x-&gt;km.seq) &#123;</span><br><span class="line">  h = xfrm_seq_hash(net, x-&gt;km.seq);</span><br><span class="line"></span><br><span class="line">  XFRM_STATE_INSERT(byseq, &amp;x-&gt;byseq, net-&gt;xfrm.state_byseq + h,</span><br><span class="line">      x-&gt;xso.type);</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> net-&gt;xfrm.state_num++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-通知"><a href="#4-通知" class="headerlink" title="4. 通知"></a>4. 通知</h4><p>最后会在<code>km_state_notify()</code>调用通知回调函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">list_for_each_entry_rcu(km, &amp;xfrm_km_list, <span class="built_in">list</span>)</span><br><span class="line">  <span class="keyword">if</span> (km-&gt;notify)</span><br><span class="line">   km-&gt;notify(x, c);</span><br></pre></td></tr></table></figure>
+
+<h2 id="四-删除xfrm-state"><a href="#四-删除xfrm-state" class="headerlink" title="四. 删除xfrm state"></a>四. 删除xfrm state</h2><p>使用<code>ip xfrm state flush</code>命令可以清除所有的xfrm state，也可以设置过滤规则清除指定xfrm state。</p>
+<p>不论如何，最后都会调用到<code>__xfrm_state_delete()</code>来清除这个xfrm state。</p>
+<p>如果我们需要真正区释放调这块空间的话需要指定sync，否则的话内核仅仅把这个节点从这种表中摘除，同时把这个节点添加到一个垃圾回收链表中(<code>gclist</code>)。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="title function_">DECLARE_WORK</span><span class="params">(xfrm_state_gc_work, xfrm_state_gc_task)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>内核的垃圾回收机制会定期调用<code>xfrm_state_gc_task()</code>来释放内存。</p>
+<h2 id="五-观察一个分组的加密过程"><a href="#五-观察一个分组的加密过程" class="headerlink" title="五. 观察一个分组的加密过程"></a>五. 观察一个分组的加密过程</h2><p>从本节开始，将介绍XFRM框架下如何使用XFRM state来对分组进行安全处理。</p>
+<p>XFRM框架除了state外还有一个policy，policy负责匹配分组是否进入XFRM流程，后续会出一个XFRM policy的文档，在此文中，了解到<strong>协议栈会根据policy来选择是否将分组交给XFRM来处理</strong>就够了。</p>
+<p>所以，后文的介绍默认协议栈已经经过了policy的匹配，确认分组需要交给XFRM，那XFRM要如何处理这个分组呢？我们提出以下问题：</p>
+<ul>
+<li>是需要使用传输模式还是隧道模式呢？</li>
+<li>是需要使用ESP封装还是使用AH封装呢？</li>
+<li>如需加密，应该使用哪种算法套件呢？</li>
+</ul>
+<p>这些问题的答案都存储在了XFRM state中。这意味着我们需要从policy中寻找线索，使用这些线索，来在XFRM state中查找答案。</p>
+<p>policy中的<strong>线索就是一个名为<code>template</code>的模板</strong>，我们将使用这个模板，在netns中的XFRM state节点中去匹配，找出匹配的XFRM state。事实上，IPsec策略通常由多个因素组成，包括源地址、目标地址、传输层协议等。当进行策略匹配时，可能会有多个xfrm state与给定的策略条件匹配，这可能导致匹配深度的增加。XFRM_MAX_DEPTH的存在就是为了限制这种情况的发生。它确保了在进行策略匹配时，系统不会无限递归地搜索和匹配xfrm state，从而避免潜在的性能问题。</p>
+<p>但是我们本文只介绍最简单的环境，<strong>一个template只能匹配到一个XFRM state</strong>。</p>
+<h3 id="5-1-IPSEC场景"><a href="#5-1-IPSEC场景" class="headerlink" title="5.1 IPSEC场景"></a>5.1 IPSEC场景</h3><p>本文将分析最传统的站点到站点之间建立IPSEC的案例。两个站点为moon和sun。</p>
+<p>两个站点之间建立了使用ESP封装的隧道（即mode为tunnel，type为ESP4）。</p>
+<p>两个站点将保护各自子网中的流量。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">10.1.0.0/16 -- | 192.168.0.1 | === | 192.168.0.2 | -- 10.2.0.0/16</span><br><span class="line">  moon-net          moon                 sun           sun-net</span><br></pre></td></tr></table></figure>
+
+<p>当隧道建立好以后，我们使用moon-net中的一个主机<code>alice</code>(10.1.0.10)来ping sun-net中的一个主机<code>bob</code>(10.2.0.10)。</p>
+<ul>
+<li>有效载荷为ICMP数据——data</li>
+<li>内层的原始IP头为：Internet Protocol Version 4, Src: 10.1.0.10, Dst: 10.2.0.10 —— Original IP Header</li>
+<li>ESP Header</li>
+<li>外层站点的IP头为：Internet Protocol Version 4, Src: 192.168.0.1, Dst: 192.168.0.2 —— Outer IP Header</li>
+</ul>
+<p>最终的IP Packet格式如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">-----------------------------------------</span><br><span class="line">|  Outer    | ESP   |  Original | ICMP  |</span><br><span class="line">| IP Header |Header | IP Header | Date  |</span><br><span class="line">-----------------------------------------</span><br></pre></td></tr></table></figure>
+
+<p>由于moon站点收到了目的地址为10.2.0.10的IP Packet，所以协议栈会转发这个数据包。</p>
+<p>我们现在应该<strong>位于网络层的<code>ip_forward()</code>处</strong>。</p>
+<h3 id="5-2-查找state"><a href="#5-2-查找state" class="headerlink" title="5.2 查找state"></a>5.2 查找state</h3><p>从现在开始，我们将从通过模板查找state开始，追踪这个分组的生命。</p>
+<p>入口函数为<code>xfrm_state_find()</code>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> xfrm_state *<span class="title function_">xfrm_state_find</span><span class="params">(<span class="type">const</span> <span class="type">xfrm_address_t</span> *daddr,</span></span><br><span class="line"><span class="params">       <span class="type">const</span> <span class="type">xfrm_address_t</span> *saddr,</span></span><br><span class="line"><span class="params">       <span class="type">const</span> <span class="keyword">struct</span> flowi *fl,</span></span><br><span class="line"><span class="params">       <span class="keyword">struct</span> xfrm_tmpl *tmpl,</span></span><br><span class="line"><span class="params">       <span class="keyword">struct</span> xfrm_policy *pol, <span class="type">int</span> *err,</span></span><br><span class="line"><span class="params">       <span class="type">unsigned</span> <span class="type">short</span> family, u32 if_id)</span>;</span><br></pre></td></tr></table></figure>
+
+<p>daddr为192.168.0.2，saddr为192.168.0.1，在查找xfrm state的时候还会结合tmpl-&gt;reqid这类标记，在netns中通过<code>net-&gt;xfrm.state_bydst</code>这个哈希表来快速匹配state。最终会使用tmpl中的字段和xfrm state中的sel字段进行精准匹配。</p>
+<p><strong>结果就是匹配到了一个合适的xfrm state并返回</strong>。那么针对这个分组的安全处理方法就都拿到了。</p>
+<h3 id="5-3-创建dst-entry"><a href="#5-3-创建dst-entry" class="headerlink" title="5.3 创建dst_entry"></a>5.3 创建dst_entry</h3><p><code>struct dst_entry</code>是用于表示网络数据包转发信息的结构体。它包含了一系列字段，用于描述数据包的转发目标、路径和相关信息，我们将<strong>重点关注他的output</strong>。</p>
+<p>XFRM框架最后也需要给协议栈返回dst_entry来让协议栈继续处理数据包，但是在XFRM框架中，对这个结构体作了扩展，这也是c语言中对<strong>继承</strong>的一种表示方法。</p>
+<p>XFRM中有一个结构体继承自dst_entry，他叫<code>struct xfrm_dst</code>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">xfrm_dst</span> &#123;</span></span><br><span class="line"> <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">dst_entry</span> <span class="title">dst</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">rtable</span>  <span class="title">rt</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">rt6_info</span>  <span class="title">rt6</span>;</span></span><br><span class="line"> &#125; u;</span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">dst_entry</span> *<span class="title">route</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">dst_entry</span> *<span class="title">child</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">dst_entry</span> *<span class="title">path</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_policy</span> *<span class="title">pols</span>[<span class="title">XFRM_POLICY_TYPE_MAX</span>];</span></span><br><span class="line"> <span class="type">int</span> num_pols, num_xfrms;</span><br><span class="line"> u32 xfrm_genid;</span><br><span class="line"> u32 policy_genid;</span><br><span class="line"> u32 route_mtu_cached;</span><br><span class="line"> u32 child_mtu_cached;</span><br><span class="line"> u32 route_cookie;</span><br><span class="line"> u32 path_cookie;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这个结构体用于表示一组要应用于某个数据流的转换。<strong>将路由、xfrm policy、xfrm state进行了关联</strong>。</p>
+<p>在对xdst实例化的过程中，将向dst_entry注册XFRM框架的ops。在<code>xfrm_alloc_dst()</code>中完成了这种注册。</p>
+<p>而<strong>决定协议栈下一层应该使用什么处理函数</strong>的是dst_entry的<code>output</code>字段。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">afinfo = xfrm_state_afinfo_get_rcu(inner_mode-&gt;family);</span><br><span class="line">dst1-&gt;output = afinfo-&gt;output;</span><br></pre></td></tr></table></figure>
+
+<p>这个afinfo是通过<code>xfrm_state_register_afinfo()</code>注册的。对于IPv4，注册的函数为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_state_afinfo</span> <span class="title">xfrm4_state_afinfo</span> =</span> &#123;</span><br><span class="line"> .family   = AF_INET,</span><br><span class="line"> .proto   = IPPROTO_IPIP,</span><br><span class="line"> .output   = xfrm4_output,</span><br><span class="line"> .transport_finish = xfrm4_transport_finish,</span><br><span class="line"> .local_error  = xfrm4_local_error,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这里我们总结一下：</p>
+<ul>
+<li>协议栈对分组进行了<strong>xfrm policy的匹配</strong></li>
+<li>XFRM模块通过policy中的模板，与XFRM state中的sel进行了匹配</li>
+<li>得到一个(可能有多个)xfrm state</li>
+<li>XFRM模块将创建一个继承自dst_entry的结构xfrm_dst</li>
+<li><strong>xfrm_dst将XFRM state、XFRM policy组织起来</strong></li>
+<li>xfrm_dst将返回一个网络数据包转发信息的结构体dst_entry</li>
+<li>dst_entry中包含了协议栈下一层要使用的处理函数skb_dst(skb)-&gt;output</li>
+<li><strong>skb_dst(skb)-&gt;output在此时为xfrm4_output</strong></li>
+</ul>
+<h3 id="5-4-ip-forward-finish"><a href="#5-4-ip-forward-finish" class="headerlink" title="5.4 ip_forward_finish"></a>5.4 ip_forward_finish</h3><p>通过之前的匹配、查找与注册，网络转发层已经知道这个分组要怎么处理了，他会调用<code>dst_output</code>来进一步处理分组。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="keyword">inline</span> <span class="type">int</span> <span class="title function_">dst_output</span><span class="params">(<span class="keyword">struct</span> net *net, <span class="keyword">struct</span> sock *sk, <span class="keyword">struct</span> sk_buff *skb)</span></span><br><span class="line">&#123;</span><br><span class="line"> <span class="keyword">return</span> INDIRECT_CALL_INET(skb_dst(skb)-&gt;output,</span><br><span class="line">      ip6_output, ip_output,</span><br><span class="line">      net, sk, skb);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个宏定义在IPv4中展开是这样的：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">likely(skb_dst(skb)-&gt;output == ip_output)</span><br><span class="line">    ip_output(net, sk, skb);</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    skb_dst(skb)-&gt;output(net, sk, skb);</span><br></pre></td></tr></table></figure>
+
+<p>我们目前处于第二个分支，我们的<strong>output函数为xfrm4_output</strong></p>
+<h3 id="5-5-xfrm4-output"><a href="#5-5-xfrm4-output" class="headerlink" title="5.5 xfrm4_output"></a>5.5 xfrm4_output</h3><p>沿着函数调用一路追下来，可以看到最终的核心处理函数在这里：</p>
+<ul>
+<li>首先调用<code>xfrm_output_one()</code>处理分组</li>
+<li>其次调用dst-&gt;ops-&gt;local_out</li>
+<li>最后检查skb_dst(skb)-&gt;xfrm字段，为空表示处理完XFRM框架了，直接通过<code>dst_output()</code>送往下一层</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">xfrm_output_resume</span><span class="params">(<span class="keyword">struct</span> sock *sk, <span class="keyword">struct</span> sk_buff *skb, <span class="type">int</span> err)</span></span><br><span class="line">&#123;</span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">net</span> *<span class="title">net</span> =</span> xs_net(skb_dst(skb)-&gt;xfrm);</span><br><span class="line"></span><br><span class="line"> <span class="keyword">while</span> (likely((err = xfrm_output_one(skb, err)) == <span class="number">0</span>)) &#123;</span><br><span class="line">  nf_reset_ct(skb);</span><br><span class="line"></span><br><span class="line">  err = skb_dst(skb)-&gt;ops-&gt;local_out(net, sk, skb);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!skb_dst(skb)-&gt;xfrm)</span><br><span class="line">   <span class="keyword">return</span> dst_output(net, sk, skb);</span><br><span class="line"></span><br><span class="line">  err = nf_hook(skb_dst(skb)-&gt;ops-&gt;family,</span><br><span class="line">         NF_INET_POST_ROUTING, net, sk, skb,</span><br><span class="line">         <span class="literal">NULL</span>, skb_dst(skb)-&gt;dev, xfrm_output2);</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-6-local-output"><a href="#5-6-local-output" class="headerlink" title="5.6 local_output"></a>5.6 local_output</h3><p>我们稍后在沿着<code>xfrm_output_one()</code>进行分析，这一次我们站在一个更高的角度来看分组的生命周期。</p>
+<p>还记得这个dst是怎么生成的吗？他在<code>xfrm_alloc_dst()</code>中注册了XFRM框架的dst ops：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">dst_ops</span> <span class="title">xfrm4_dst_ops_template</span> =</span> &#123;</span><br><span class="line"> .family =  AF_INET,</span><br><span class="line"> .local_out =  __ip_local_out,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>所以<code>skb_dst(skb)-&gt;ops-&gt;local_out()</code>就是<code>__ip_local_out()</code>，这也意味着XFRM框架已经完成了tunnel封装和ESP加密了，不难猜测，<code>xfrm_output_one()</code>中所做的就是完成tunnel封装和ESP加密。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> __ip_local_out(<span class="keyword">struct</span> net *net, <span class="keyword">struct</span> sock *sk, <span class="keyword">struct</span> sk_buff *skb)</span><br><span class="line">&#123;</span><br><span class="line"> skb-&gt;protocol = htons(ETH_P_IP);</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> nf_hook(NFPROTO_IPV4, NF_INET_LOCAL_OUT,</span><br><span class="line">         net, sk, skb, <span class="literal">NULL</span>, skb_dst(skb)-&gt;dev,</span><br><span class="line">         dst_output);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，目前skb-&gt;protocol指明为ETH_P_IP，然后将IP Packet送往下一层。此时<code>skb_dst(skb)-&gt;output</code>的回调函数就是<code>ip_output()</code>，<strong>至此，我们完整地处理完了ipforward动作</strong>。</p>
+<h2 id="六-封装与加密"><a href="#六-封装与加密" class="headerlink" title="六. 封装与加密"></a>六. 封装与加密</h2><p>让我们回归<code>xfrm_output_one()</code>，看一下这里发生了什么。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">xfrm_output_one</span><span class="params">(<span class="keyword">struct</span> sk_buff *skb, <span class="type">int</span> err)</span></span><br><span class="line">&#123;</span><br><span class="line"> <span class="keyword">do</span> &#123;</span><br><span class="line">  err = xfrm_outer_mode_output(x, skb);</span><br><span class="line"></span><br><span class="line">  err = NF_HOOK(dst-&gt;ops-&gt;family, NF_INET_XFRM_OUT, net, <span class="literal">NULL</span>,</span><br><span class="line">          skb, <span class="literal">NULL</span>, dst-&gt;dev, xfrm_type_output);</span><br><span class="line">resume:</span><br><span class="line">  dst = skb_dst_pop(skb);</span><br><span class="line">  skb_dst_set(skb, dst);</span><br><span class="line">  x = dst-&gt;xfrm;</span><br><span class="line"> &#125; <span class="keyword">while</span> (x &amp;&amp; !(x-&gt;outer_mode.flags &amp; XFRM_MODE_FLAG_TUNNEL));</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>总体上是一个do while，在IPSEC中是存在内层IP和外层IP的说法的，所以这个截至条件就是外层IP的mode不再是tunnel（这是否意味着可以像套娃一样套很多层呢？）。</p>
+<p>接下来看一下循环的主要流程：</p>
+<ul>
+<li>xfrm_outer_mode_output：添加外层IP头</li>
+<li>xfrm_type_output：进行ESP加密</li>
+</ul>
+<h3 id="6-1-封装"><a href="#6-1-封装" class="headerlink" title="6.1 封装"></a>6.1 封装</h3><p>我们主要关注隧道模式的封装，它是在<code>xfrm4_tunnel_encap_add()</code>中完成的。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">xfrm4_tunnel_encap_add</span><span class="params">(<span class="keyword">struct</span> xfrm_state *x, <span class="keyword">struct</span> sk_buff *skb)</span></span><br><span class="line">&#123;</span><br><span class="line"> skb_set_inner_network_header(skb, skb_network_offset(skb));</span><br><span class="line"> skb_set_inner_transport_header(skb, skb_transport_offset(skb));</span><br><span class="line"> skb_set_network_header(skb, -x-&gt;props.header_len);</span><br><span class="line"></span><br><span class="line"> skb-&gt;mac_header = skb-&gt;network_header +</span><br><span class="line">     offsetof(<span class="keyword">struct</span> iphdr, protocol);</span><br><span class="line"> skb-&gt;transport_header = skb-&gt;network_header + <span class="keyword">sizeof</span>(*top_iph);</span><br><span class="line"></span><br><span class="line"> top_iph = ip_hdr(skb);</span><br><span class="line"></span><br><span class="line"> top_iph-&gt;ihl = <span class="number">5</span>;</span><br><span class="line"> top_iph-&gt;version = <span class="number">4</span>;</span><br><span class="line"> </span><br><span class="line"> top_iph-&gt;saddr = x-&gt;props.saddr.a4;</span><br><span class="line"> top_iph-&gt;daddr = x-&gt;id.daddr.a4;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们看一下原始的Packet，如果skb-&gt;head为0的话，64到78刚好为14字节的Eth header，78到98刚好是IP header，98开始就是ICMP负载了。<br><img src="/blog_image/XFRM-state/01.png" alt="ICMP"></p>
+<p>他主要分为以下操作：</p>
+<ul>
+<li>skb_set_inner_network_header：用inner_network_header指向network_head，表示这个IP Packet的外层IP报文头现在只是内层IP头了。</li>
+<li>skb_set_network_header：更新外层IP头相对于内层IP头的偏移。</li>
+<li>更新mac_header相对于外层IP头的偏移。</li>
+<li>通过<code>iphdr()</code>拿到指向外层IP头的指针</li>
+<li>初始化外层IP头，包括长度、协议、源目IP地址等。</li>
+</ul>
+<p>此时，经过tunnel的封装，我们的skb中的一些指针状态将变为以下的样子。</p>
+<p><img src="/blog_image/XFRM-state/02.png" alt="隧道封装"></p>
+<h3 id="6-2-加密"><a href="#6-2-加密" class="headerlink" title="6.2 加密"></a>6.2 加密</h3><p>在完成隧道的封装以后，XFRM将交给之前注册的type模块来处理分组——<code>x-&gt;type-&gt;output(x, skb)</code>。</p>
+<p>还记得这个type是在哪里进行注册的吗？我们在3.2.2节中简单提到了在创建好XFRM state之后会调用<code>__xfrm_init_state()</code>对state进行初始化。也就是在这里注册了type的output函数。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">xfrm_type</span> <span class="title">esp_type</span> =</span></span><br><span class="line">&#123;</span><br><span class="line"> .owner  = THIS_MODULE,</span><br><span class="line"> .proto       = IPPROTO_ESP,</span><br><span class="line"> .flags  = XFRM_TYPE_REPLAY_PROT,</span><br><span class="line"> .init_state = esp_init_state,</span><br><span class="line"> .destructor = esp_destroy,</span><br><span class="line"> .input  = esp_input,</span><br><span class="line"> .output  = esp_output,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>所以，我们进入了ESP模块，看下他是怎么创建ESP封装与加密的。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">esp_output</span><span class="params">(<span class="keyword">struct</span> xfrm_state *x, <span class="keyword">struct</span> sk_buff *skb)</span></span><br><span class="line">&#123;</span><br><span class="line"> *skb_mac_header(skb) = IPPROTO_ESP;</span><br><span class="line"></span><br><span class="line"> esp.esph = ip_esp_hdr(skb);</span><br><span class="line"></span><br><span class="line"> esph = esp.esph;</span><br><span class="line"> esph-&gt;spi = x-&gt;id.spi;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> esp_output_tail(x, skb, &amp;esp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>首先修改了mac header，IPPROTO_ESP为50</li>
+<li>填充esp header</li>
+<li>esp_output_tail进行加密认证</li>
+</ul>
+<h4 id="1-封装"><a href="#1-封装" class="headerlink" title="1. 封装"></a>1. 封装</h4><p>通过上面的图片，我们可以看到在封装外层IP的时候，预留了16字节的空间，交给了<code>transport_header</code>，所以<code>ip_esp_hdr()</code>是用的<code>skb_transport_header()</code>来拿到的地址</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="keyword">inline</span> <span class="keyword">struct</span> ip_esp_hdr *<span class="title function_">ip_esp_hdr</span><span class="params">(<span class="type">const</span> <span class="keyword">struct</span> sk_buff *skb)</span></span><br><span class="line">&#123;</span><br><span class="line"> <span class="keyword">return</span> (<span class="keyword">struct</span> ip_esp_hdr *)skb_transport_header(skb);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>拿到esp头后会填充spi、seq和IV等字段。</p>
+<h4 id="2-加密"><a href="#2-加密" class="headerlink" title="2. 加密"></a>2. 加密</h4><p>加密前会先封装一个加密请求,最终调用<code>crypto_aead_encrypt()</code>进行加密。<br>从组织加密请求到调用加密算法看着非常晦涩，我就先跳过了。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">esp_output_tail</span><span class="params">(<span class="keyword">struct</span> xfrm_state *x, <span class="keyword">struct</span> sk_buff *skb, <span class="keyword">struct</span> esp_info *esp)</span></span><br><span class="line">&#123;</span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">crypto_aead</span> *<span class="title">aead</span>;</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">aead_request</span> *<span class="title">req</span>;</span></span><br><span class="line"></span><br><span class="line"> aead = x-&gt;data;</span><br><span class="line"></span><br><span class="line"> iv = esp_tmp_iv(aead, tmp, extralen);</span><br><span class="line"> req = esp_tmp_req(aead, iv);</span><br><span class="line"></span><br><span class="line"> aead_request_set_crypt(req, sg, dsg, ivlen + esp-&gt;clen, iv);</span><br><span class="line"> aead_request_set_ad(req, assoclen);</span><br><span class="line"></span><br><span class="line"> err = crypto_aead_encrypt(req);</span><br><span class="line"> <span class="keyword">return</span> err;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://zrfyun.top">zrf</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://zrfyun.top/2023/12/11/XFRM-state/">http://zrfyun.top/2023/12/11/XFRM-state/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://zrfyun.top" target="_blank">zrfyun.top</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/strongswan/">strongswan</a><a class="post-meta__tags" href="/tags/xfrm-state/">xfrm-state</a><a class="post-meta__tags" href="/tags/tunnel/">tunnel</a><a class="post-meta__tags" href="/tags/ESP/">ESP</a></div><div class="post_share"><div class="social-share" data-image="/blog_image/XFRM-state/ipsec.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>感谢支持</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat_pay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat_pay.jpg"/></a><div class="post-qr-code-desc"></div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/12/16/web_qa/" title="使用OpenAI分析私有数据"><img class="cover" src="/blog_image/web_qa/openai.jpeg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">使用OpenAI分析私有数据</div></div></a></div><div class="next-post pull-right"><a href="/2023/12/03/20231203-01/" title="非对称加密算法与CA机构"><img class="cover" src="/blog_image/20231203-01/cover.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">非对称加密算法与CA机构</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2024/05/26/trace_esp/" title="Trace ESP Packet"><img class="cover" src="/blog_image/XFRM-state/ipsec.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-05-26</div><div class="title">Trace ESP Packet</div></div></a></div><div><a href="/2023/12/03/20231203-01/" title="非对称加密算法与CA机构"><img class="cover" src="/blog_image/20231203-01/cover.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-03</div><div class="title">非对称加密算法与CA机构</div></div></a></div><div><a href="/2024/03/30/IKEv1_pubkey_auth/" title="IKEv1中的证书认证详述(SM2国密证书)"><img class="cover" src="/blog_image/20231203-01/cover.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-30</div><div class="title">IKEv1中的证书认证详述(SM2国密证书)</div></div></a></div><div><a href="/2024/01/19/vici/" title="Versatile IKE Control Interface"><img class="cover" src="/blog_image/XFRM-state/ipsec.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-01-19</div><div class="title">Versatile IKE Control Interface</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">zrf</div><div class="author-info__description">求知若渴,虚心若愚</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/zrf-1998"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/zrf-1998" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:853241825@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">蹒跚学步，感谢支持</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80-%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">一. 简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C-netns%E4%B8%8B%E7%9A%84XFRM"><span class="toc-number">2.</span> <span class="toc-text">二. netns下的XFRM</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-netns%E4%B8%AD%E7%9A%84xfrm-state"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 netns中的xfrm state</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-xfrm-state%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 xfrm state初始化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89-%E6%B7%BB%E5%8A%A0%E4%B8%80%E4%B8%AAxfrm-state"><span class="toc-number">3.</span> <span class="toc-text">三. 添加一个xfrm state</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-xfrm-state"><span class="toc-number">3.1.</span> <span class="toc-text">3.1 xfrm_state</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-id"><span class="toc-number">3.1.1.</span> <span class="toc-text">1. id</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-sel"><span class="toc-number">3.1.2.</span> <span class="toc-text">2. sel</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-props"><span class="toc-number">3.1.3.</span> <span class="toc-text">3. props</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-type"><span class="toc-number">3.1.4.</span> <span class="toc-text">4. type</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-%E7%AE%97%E6%B3%95%E7%9B%B8%E5%85%B3"><span class="toc-number">3.1.5.</span> <span class="toc-text">5. 算法相关</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAstate"><span class="toc-number">3.2.</span> <span class="toc-text">3.2 创建一个state</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E5%88%9B%E5%BB%BAstate"><span class="toc-number">3.2.1.</span> <span class="toc-text">1. 创建state</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E5%88%9D%E5%A7%8B%E5%8C%96state"><span class="toc-number">3.2.2.</span> <span class="toc-text">2. 初始化state</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E6%B3%A8%E5%86%8Cstate"><span class="toc-number">3.2.3.</span> <span class="toc-text">3. 注册state</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E9%80%9A%E7%9F%A5"><span class="toc-number">3.2.4.</span> <span class="toc-text">4. 通知</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B-%E5%88%A0%E9%99%A4xfrm-state"><span class="toc-number">4.</span> <span class="toc-text">四. 删除xfrm state</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94-%E8%A7%82%E5%AF%9F%E4%B8%80%E4%B8%AA%E5%88%86%E7%BB%84%E7%9A%84%E5%8A%A0%E5%AF%86%E8%BF%87%E7%A8%8B"><span class="toc-number">5.</span> <span class="toc-text">五. 观察一个分组的加密过程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-IPSEC%E5%9C%BA%E6%99%AF"><span class="toc-number">5.1.</span> <span class="toc-text">5.1 IPSEC场景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E6%9F%A5%E6%89%BEstate"><span class="toc-number">5.2.</span> <span class="toc-text">5.2 查找state</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-%E5%88%9B%E5%BB%BAdst-entry"><span class="toc-number">5.3.</span> <span class="toc-text">5.3 创建dst_entry</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-ip-forward-finish"><span class="toc-number">5.4.</span> <span class="toc-text">5.4 ip_forward_finish</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-xfrm4-output"><span class="toc-number">5.5.</span> <span class="toc-text">5.5 xfrm4_output</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-6-local-output"><span class="toc-number">5.6.</span> <span class="toc-text">5.6 local_output</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD-%E5%B0%81%E8%A3%85%E4%B8%8E%E5%8A%A0%E5%AF%86"><span class="toc-number">6.</span> <span class="toc-text">六. 封装与加密</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E5%B0%81%E8%A3%85"><span class="toc-number">6.1.</span> <span class="toc-text">6.1 封装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-%E5%8A%A0%E5%AF%86"><span class="toc-number">6.2.</span> <span class="toc-text">6.2 加密</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E5%B0%81%E8%A3%85"><span class="toc-number">6.2.1.</span> <span class="toc-text">1. 封装</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E5%8A%A0%E5%AF%86"><span class="toc-number">6.2.2.</span> <span class="toc-text">2. 加密</span></a></li></ol></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url('/url(http:/zrfyun.top/img/back.jpeg)')"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2024 By zrf</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a href="http://zrfyun.top/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><div class="js-pjax"><script>(() => {
+  const initValine = () => {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'mHV5QZzhNBabMj6y5kw2SYqq-gzGzoHsz',
+      appKey: '2fvaL99PG3kQNK15rc70qhMV',
+      avatar: 'monsterid',
+      serverURLs: 'https://mhv5qzzh.lc-cn-n1-shared.com',
+      emojiMaps: "",
+      path: window.location.pathname,
+      visitor: false
+    }, null))
+  }
+
+  const loadValine = async () => {
+    if (typeof Valine === 'function') initValine()
+    else {
+      await getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js')
+      initValine()
+    }
+  }
+
+  if ('Valine' === 'Valine' || !false) {
+    if (false) btf.loadComment(document.getElementById('vcomment'),loadValine)
+    else setTimeout(loadValine, 0)
+  } else {
+    window.loadOtherComment = loadValine
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

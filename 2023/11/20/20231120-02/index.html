@@ -1,0 +1,251 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Markdown基础语法 | zrfyun.top</title><meta name="author" content="zrf,853241825@qq.com"><meta name="copyright" content="zrf"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Markdown助力写作,让我们更加专注于写作内容,而忽略写作格式。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Markdown基础语法">
+<meta property="og:url" content="http://zrfyun.top/2023/11/20/20231120-02/index.html">
+<meta property="og:site_name" content="zrfyun.top">
+<meta property="og:description" content="Markdown助力写作,让我们更加专注于写作内容,而忽略写作格式。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zrfyun.top/blog_image/20231120-02/Markdown-mark.png">
+<meta property="article:published_time" content="2023-11-20T07:00:37.000Z">
+<meta property="article:modified_time" content="2024-02-27T13:47:16.047Z">
+<meta property="article:author" content="zrf">
+<meta property="article:tag" content="Markdown">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zrfyun.top/blog_image/20231120-02/Markdown-mark.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://zrfyun.top/2023/11/20/20231120-02/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Markdown基础语法',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-02-27 21:47:16'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 7.0.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/blog_image/20231120-02/Markdown-mark.png')"><nav id="nav"><span id="blog-info"><a href="/" title="zrfyun.top"><span class="site-name">zrfyun.top</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Markdown基础语法</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-11-20T07:00:37.000Z" title="发表于 2023-11-20 15:00:37">2023-11-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-02-27T13:47:16.047Z" title="更新于 2024-02-27 21:47:16">2024-02-27</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E8%AF%AD%E8%A8%80/">语言</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">685</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>2分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Markdown基础语法"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="一-简介"><a href="#一-简介" class="headerlink" title="一. 简介"></a>一. 简介</h2><p>markdown语法可以让我们更加<strong>专注于写作内容，而忽略写作格式</strong>。<br>得益于很多插件的支持，使用markdown语法编写的文档可以方便地转换为html、PDF、word等格式，本文介绍一些vscode中好用的<strong>markdown插件</strong>以及最<strong>基础的md语法</strong>。</p>
+<span id="more"></span>
+
+<h2 id="二-环境"><a href="#二-环境" class="headerlink" title="二. 环境"></a>二. 环境</h2><p>  使用vscode并下载markdown相关插件：</p>
+<ul>
+<li>step1：下载vscode</li>
+<li>step2：在vscode中安装插件<ul>
+<li>插件1：Markdown Preview Enhanced（md预览）</li>
+<li>插件2：markdownlint（md语法检测器）</li>
+</ul>
+</li>
+</ul>
+<p>如果你是本地安装的话就会在LOCAL-INSTALL中看到那两个插件<br><img src="/blog_image/20231120-02/image.png" alt="插件列表"></p>
+<h2 id="三-预览"><a href="#三-预览" class="headerlink" title="三. 预览"></a>三. 预览</h2><p>  markdown是一种用文本来控制显示格式的一种语法，为了方便地查看最终的效果，先介绍如何预览自己写的md文档。<br><img src="/blog_image/20231120-02/image-1.png" alt="预览"></p>
+<h2 id="四-编写md文件"><a href="#四-编写md文件" class="headerlink" title="四. 编写md文件"></a>四. 编写md文件</h2><p>  这里简单介绍一些md语法。更多语法格式详见<a target="_blank" rel="noopener" href="https://github.com/DavidAnson/markdownlint/tree/v0.31.1/doc">这里</a></p>
+<h3 id="4-1-标题语法"><a href="#4-1-标题语法" class="headerlink" title="4.1 标题语法"></a>4.1 标题语法</h3><p>  我们可以使用一个‘#’来表示一级标题，两个‘#’来表示二级标题，以此类推</p>
+  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">/* 这里是一级标题 */</span><br><span class="line"># 一级标题</span><br><span class="line"></span><br><span class="line">/* 这里是二级标题 */</span><br><span class="line">## 二级标题</span><br><span class="line"></span><br><span class="line">/* 这里是三级标题 */</span><br><span class="line">### 三级标题</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-强调语法"><a href="#4-2-强调语法" class="headerlink" title="4.2 强调语法"></a>4.2 强调语法</h3><p>  在要强调的内容两个添加两个*：<br>  或者选中要强调的段落，使用<strong>快捷接Ctrl+b</strong>为加粗</p>
+  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">/* 这里是强调了关键字&quot;hello&quot; */</span><br><span class="line">**hello**</span><br><span class="line"></span><br><span class="line">/* 斜体 */</span><br><span class="line">*hello*</span><br><span class="line">_hello_</span><br><span class="line"></span><br><span class="line">/* 被横线删除 */</span><br><span class="line">~~hello~~</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-3-列表"><a href="#4-3-列表" class="headerlink" title="4.3 列表"></a>4.3 列表</h3><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">/* 无序列表 <span class="emphasis">*/</span></span><br><span class="line"><span class="emphasis">*</span> Item 1</span><br><span class="line"><span class="bullet">*</span> Item 2</span><br><span class="line"><span class="bullet">  *</span> Item 2a</span><br><span class="line"><span class="bullet">  *</span> Item 2b</span><br><span class="line"></span><br><span class="line">/* 有序列表 <span class="emphasis">*/</span></span><br><span class="line"><span class="emphasis">1. Item 1</span></span><br><span class="line"><span class="emphasis">1. Item 2</span></span><br><span class="line"><span class="emphasis">1. Item 3</span></span><br><span class="line"><span class="emphasis">   1. Item 3a</span></span><br><span class="line"><span class="emphasis">   1. Item 3b</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="4-4-图片"><a href="#4-4-图片" class="headerlink" title="4.4 图片"></a>4.4 图片</h3>  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/* 插入图片的语法 */</span><br><span class="line">![Alt Text](url)</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-5-链接"><a href="#4-5-链接" class="headerlink" title="4.5 链接"></a>4.5 链接</h3><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="string">GitHub</span>](<span class="link">https://github.com</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-6-引用"><a href="#4-6-引用" class="headerlink" title="4.6 引用"></a>4.6 引用</h3><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">正如 Kanye West 所说：</span><br><span class="line"></span><br><span class="line"><span class="quote">&gt; We&#x27;re living the future so</span></span><br><span class="line"><span class="quote">&gt; the present is our past.</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="4-7-分割线"><a href="#4-7-分割线" class="headerlink" title="4.7 分割线"></a>4.7 分割线</h3><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">/* 三个及以上的- <span class="emphasis">*/</span></span></span><br><span class="line"><span class="emphasis"><span class="section">---</span></span></span><br></pre></td></tr></table></figure>
+
+<h3 id="4-8-行内代码"><a href="#4-8-行内代码" class="headerlink" title="4.8 行内代码"></a>4.8 行内代码</h3><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">我觉得你应该在这里使用<span class="code">`&lt;addr&gt;`</span> 才对。</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-9-代码块以及语法高亮"><a href="#4-9-代码块以及语法高亮" class="headerlink" title="4.9 代码块以及语法高亮"></a>4.9 代码块以及语法高亮</h3><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">/* 在代码块的上方和下方添加<span class="code">``` */</span></span><br><span class="line"><span class="code"></span></span><br><span class="line"><span class="code">\```</span>c</span><br><span class="line"><span class="section">#include <span class="language-xml"><span class="tag">&lt;<span class="name">stdio.h</span>&gt;</span></span></span></span><br><span class="line"></span><br><span class="line">int main(void)</span><br><span class="line">&#123;</span><br><span class="line">  printf(&quot;hello world\n&quot;);</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br><span class="line">\<span class="code">```</span></span><br></pre></td></tr></table></figure>
+
+<p>会得到以下效果</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;hello world\n&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-10-任务列表"><a href="#4-10-任务列表" class="headerlink" title="4.10 任务列表"></a>4.10 任务列表</h3><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">*</span> [x] task1</span><br><span class="line"><span class="bullet">*</span> [x] task2</span><br><span class="line"><span class="bullet">*</span> [x] task3</span><br><span class="line"><span class="bullet">*</span> [ ] task4</span><br></pre></td></tr></table></figure>
+
+<p>效果如下</p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> task1</li>
+<li><input checked="" disabled="" type="checkbox"> task2</li>
+<li><input checked="" disabled="" type="checkbox"> task3</li>
+<li><input disabled="" type="checkbox"> task4</li>
+</ul>
+<h2 id="五-导出文件"><a href="#五-导出文件" class="headerlink" title="五. 导出文件"></a>五. 导出文件</h2><p>  有很多工具可以方便的将markdown文章导出为其他格式，这也是我使用markdown来写文章的最重要的原因，我们可以将它转换为PDF格式发送给别人，如果想要些自己的博客的时候，也可以将它转换为html格式。<br>  我使用Markdown Preview Enhanced插件提供的一些方法来进行导出。<br>  可以右键预览页面，导出PDF、html、图片等格式。<br>  <img src="/blog_image/20231120-02/image-2.png" alt="导出文件"></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://zrfyun.top">zrf</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://zrfyun.top/2023/11/20/20231120-02/">http://zrfyun.top/2023/11/20/20231120-02/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://zrfyun.top" target="_blank">zrfyun.top</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Markdown/">Markdown</a></div><div class="post_share"><div class="social-share" data-image="/blog_image/20231120-02/Markdown-mark.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>感谢支持</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat_pay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat_pay.jpg"/></a><div class="post-qr-code-desc"></div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/11/25/backtrace/" title="基于backtrace和BFD的栈回溯"><img class="cover" src="/blog_image/20231125-01/backtrace.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">基于backtrace和BFD的栈回溯</div></div></a></div><div class="next-post pull-right"><a href="/2023/11/19/20231120-01/" title="如何发表个人博客"><img class="cover" src="/blog_image/20231120-01/hexo.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">如何发表个人博客</div></div></a></div></nav><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">zrf</div><div class="author-info__description">求知若渴,虚心若愚</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/zrf-1998"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/zrf-1998" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:853241825@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">蹒跚学步，感谢支持</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80-%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">一. 简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C-%E7%8E%AF%E5%A2%83"><span class="toc-number">2.</span> <span class="toc-text">二. 环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89-%E9%A2%84%E8%A7%88"><span class="toc-number">3.</span> <span class="toc-text">三. 预览</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B-%E7%BC%96%E5%86%99md%E6%96%87%E4%BB%B6"><span class="toc-number">4.</span> <span class="toc-text">四. 编写md文件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E6%A0%87%E9%A2%98%E8%AF%AD%E6%B3%95"><span class="toc-number">4.1.</span> <span class="toc-text">4.1 标题语法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E5%BC%BA%E8%B0%83%E8%AF%AD%E6%B3%95"><span class="toc-number">4.2.</span> <span class="toc-text">4.2 强调语法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E5%88%97%E8%A1%A8"><span class="toc-number">4.3.</span> <span class="toc-text">4.3 列表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E5%9B%BE%E7%89%87"><span class="toc-number">4.4.</span> <span class="toc-text">4.4 图片</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-%E9%93%BE%E6%8E%A5"><span class="toc-number">4.5.</span> <span class="toc-text">4.5 链接</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-6-%E5%BC%95%E7%94%A8"><span class="toc-number">4.6.</span> <span class="toc-text">4.6 引用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-7-%E5%88%86%E5%89%B2%E7%BA%BF"><span class="toc-number">4.7.</span> <span class="toc-text">4.7 分割线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-8-%E8%A1%8C%E5%86%85%E4%BB%A3%E7%A0%81"><span class="toc-number">4.8.</span> <span class="toc-text">4.8 行内代码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-9-%E4%BB%A3%E7%A0%81%E5%9D%97%E4%BB%A5%E5%8F%8A%E8%AF%AD%E6%B3%95%E9%AB%98%E4%BA%AE"><span class="toc-number">4.9.</span> <span class="toc-text">4.9 代码块以及语法高亮</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-10-%E4%BB%BB%E5%8A%A1%E5%88%97%E8%A1%A8"><span class="toc-number">4.10.</span> <span class="toc-text">4.10 任务列表</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94-%E5%AF%BC%E5%87%BA%E6%96%87%E4%BB%B6"><span class="toc-number">5.</span> <span class="toc-text">五. 导出文件</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url('/url(http:/zrfyun.top/img/back.jpeg)')"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2024 By zrf</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a href="http://zrfyun.top/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><div class="js-pjax"><script>(() => {
+  const initValine = () => {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'mHV5QZzhNBabMj6y5kw2SYqq-gzGzoHsz',
+      appKey: '2fvaL99PG3kQNK15rc70qhMV',
+      avatar: 'monsterid',
+      serverURLs: 'https://mhv5qzzh.lc-cn-n1-shared.com',
+      emojiMaps: "",
+      path: window.location.pathname,
+      visitor: false
+    }, null))
+  }
+
+  const loadValine = async () => {
+    if (typeof Valine === 'function') initValine()
+    else {
+      await getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js')
+      initValine()
+    }
+  }
+
+  if ('Valine' === 'Valine' || !false) {
+    if (false) btf.loadComment(document.getElementById('vcomment'),loadValine)
+    else setTimeout(loadValine, 0)
+  } else {
+    window.loadOtherComment = loadValine
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

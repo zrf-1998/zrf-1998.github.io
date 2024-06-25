@@ -1,0 +1,288 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>使用OpenAI分析私有数据 | zrfyun.top</title><meta name="author" content="zrf,853241825@qq.com"><meta name="copyright" content="zrf"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本文通过使用python，爬取个人网站中的数据，作为私有数据源，通过提问-回答方式从OpenAI中了解本站中的信息">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用OpenAI分析私有数据">
+<meta property="og:url" content="http://zrfyun.top/2023/12/16/web_qa/index.html">
+<meta property="og:site_name" content="zrfyun.top">
+<meta property="og:description" content="本文通过使用python，爬取个人网站中的数据，作为私有数据源，通过提问-回答方式从OpenAI中了解本站中的信息">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zrfyun.top/blog_image/web_qa/openai.jpeg">
+<meta property="article:published_time" content="2023-12-16T09:48:12.000Z">
+<meta property="article:modified_time" content="2024-02-27T13:47:16.067Z">
+<meta property="article:author" content="zrf">
+<meta property="article:tag" content="OpenAI">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zrfyun.top/blog_image/web_qa/openai.jpeg"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://zrfyun.top/2023/12/16/web_qa/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '使用OpenAI分析私有数据',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-02-27 21:47:16'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 7.0.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/blog_image/web_qa/openai.jpeg')"><nav id="nav"><span id="blog-info"><a href="/" title="zrfyun.top"><span class="site-name">zrfyun.top</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">使用OpenAI分析私有数据</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-12-16T09:48:12.000Z" title="发表于 2023-12-16 17:48:12">2023-12-16</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-02-27T13:47:16.067Z" title="更新于 2024-02-27 21:47:16">2024-02-27</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AI/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.6k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>10分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="使用OpenAI分析私有数据"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="Web-Q-A-with-Embeddings"><a href="#Web-Q-A-with-Embeddings" class="headerlink" title="Web  Q&amp;A with Embeddings"></a>Web  Q&amp;A with Embeddings</h2><p>Learn how to crawl your website and build a Q&#x2F;A bot with the OpenAI API. You can find the full tutorial in the <a target="_blank" rel="noopener" href="https://platform.openai.com/docs/tutorials/web-qa-embeddings">OpenAI documentation</a>.</p>
+<h2 id="一-配置python环境"><a href="#一-配置python环境" class="headerlink" title="一. 配置python环境"></a>一. 配置python环境</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建虚拟环境</span></span><br><span class="line">zrf@debian:~/git/web-crawl-q-and-a-example$ python3 -m venv openai-env</span><br><span class="line"></span><br><span class="line"><span class="comment"># 激活环境</span></span><br><span class="line">zrf@debian:~/git/web-crawl-q-and-a-example$ <span class="built_in">source</span> openai-env/bin/activate</span><br><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ </span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装openai python库(使用清华镜像源)</span></span><br><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ pip install openai  -i https://pypi.tuna.tsinghua.edu.cn/simple</span><br></pre></td></tr></table></figure>
+
+<h2 id="二-配置本地APIKEY"><a href="#二-配置本地APIKEY" class="headerlink" title="二. 配置本地APIKEY"></a>二. 配置本地APIKEY</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 忽略该文件</span></span><br><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ <span class="built_in">cat</span> .gitignore </span><br><span class="line">.<span class="built_in">env</span></span><br><span class="line">openai-env</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加自己的APIKEY</span></span><br><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ <span class="built_in">cat</span> .<span class="built_in">env</span> </span><br><span class="line"><span class="comment"># Once you add your API key below, make sure to not share it with anyone! The API key should remain private.</span></span><br><span class="line">OPENAI_API_KEY=abc123</span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果你的KEY需要代理的话需要配置以下环境变量</span></span><br><span class="line">OPENAI_API_BASE_URL=</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置环境变量</span></span><br><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ <span class="built_in">source</span> .<span class="built_in">env</span> </span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试环境变量</span></span><br><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ <span class="built_in">echo</span> <span class="variable">$OPENAI_API_KEY</span></span><br><span class="line">abc123</span><br></pre></td></tr></table></figure>
+
+<p>可以通过以下代码导入自己的KEY和代理地址</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI</span><br><span class="line"></span><br><span class="line">client = OpenAI()</span><br><span class="line"><span class="comment"># defaults to getting the key using os.environ.get(&quot;OPENAI_API_KEY&quot;)</span></span><br><span class="line"><span class="comment"># if you saved the key under a different environment variable name, you can do something like:</span></span><br><span class="line"><span class="comment"># client = OpenAI(</span></span><br><span class="line"><span class="comment">#   api_key=os.environ.get(&quot;CUSTOM_ENV_NAME&quot;),</span></span><br><span class="line"><span class="comment"># )</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="三-一个小测试"><a href="#三-一个小测试" class="headerlink" title="三. 一个小测试"></a>三. 一个小测试</h2><ul>
+<li>测试代码</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI</span><br><span class="line"><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv</span><br><span class="line">load_dotenv()</span><br><span class="line"></span><br><span class="line">client = OpenAI(</span><br><span class="line">    api_key=os.environ.get(<span class="string">&quot;OPENAI_API_KEY&quot;</span>),</span><br><span class="line">    base_url=os.environ.get(<span class="string">&quot;OPENAI_API_BASE_URL&quot;</span>),</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">completion = client.chat.completions.create(</span><br><span class="line">  model=<span class="string">&quot;gpt-3.5-turbo&quot;</span>,</span><br><span class="line">  messages=[</span><br><span class="line">    &#123;<span class="string">&quot;role&quot;</span>: <span class="string">&quot;system&quot;</span>, <span class="string">&quot;content&quot;</span>: <span class="string">&quot;你擅长中英文翻译&quot;</span>&#125;,</span><br><span class="line">    &#123;<span class="string">&quot;role&quot;</span>: <span class="string">&quot;user&quot;</span>, <span class="string">&quot;content&quot;</span>: <span class="string">&quot;将&#x27;stay hungry, stay foolish&#x27;翻译为中文&quot;</span>&#125;</span><br><span class="line">  ]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(completion.choices[<span class="number">0</span>].message.content)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>测试结果</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ <span class="built_in">source</span> .<span class="built_in">env</span> </span><br><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ python3 openai-test.py </span><br><span class="line"><span class="string">&quot;stay hungry, stay foolish&quot;</span> 的中文翻译是 <span class="string">&quot;求知若饥，虚心若愚&quot;</span>。</span><br></pre></td></tr></table></figure>
+
+<h2 id="三-让AI分析私有数据"><a href="#三-让AI分析私有数据" class="headerlink" title="三. 让AI分析私有数据"></a>三. 让AI分析私有数据</h2><p>本节我们将让OpenAI分析本地的私有数据,我们通过提问的方式,来检测他的分析是否正确。</p>
+<h3 id="3-1-创建私有数据文档"><a href="#3-1-创建私有数据文档" class="headerlink" title="3.1 创建私有数据文档"></a>3.1 创建私有数据文档</h3><p>我将先使用中文私有数据并使用中文提问,再换为英文私有数据并用英文提问</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># 中文</span><br><span class="line">今年是2023年</span><br><span class="line">我叫zrf，女，今年18岁了。</span><br><span class="line">zrf有一个异性的朋友，1998年出生。</span><br><span class="line"></span><br><span class="line"># 英文</span><br><span class="line">This year is 2023.</span><br><span class="line">My name is zrf, female, and I&#x27;m 18 years old this year.</span><br><span class="line">zrf has a friend of the opposite sex who was born in 1998.</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-生成嵌入向量"><a href="#3-2-生成嵌入向量" class="headerlink" title="3.2 生成嵌入向量"></a>3.2 生成嵌入向量</h3><p>看一下生成的嵌入向量</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ <span class="built_in">cat</span> processed/embeddings.csv</span><br><span class="line">,text,n_tokens,embeddings</span><br><span class="line">0,. 今年是2023年 我叫zrf，女，今年18岁了。 zrf有一个异性的朋友，1998年出生。 ,39,   \</span><br><span class="line"><span class="string">&quot;[-0.025911948, -0.027703455, -0.0065136873,....很长,不贴了]&quot;</span></span><br><span class="line"></span><br><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ <span class="built_in">cat</span> processed/embeddings.csv</span><br><span class="line">,text,n_tokens,embeddings</span><br><span class="line">0,<span class="string">&quot;. This year is 2023. My name is zrf, female, and I&#x27;m 18 years old this year. zrf has a friend of the opposite sex who was born in 1998.&quot;</span>,43,\</span><br><span class="line"><span class="string">&quot;[-0.027196646, -0.022042233, -0.010211693, 0.0008644648, -0.0007859507, 0.0085734185, -0.037790384, -0.011888819, -0.026989432, -0.026393697, 0.024930257, 0.011176526, 0.0037103994,....很长,不贴了]&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-提问"><a href="#3-3-提问" class="headerlink" title="3.3 提问"></a>3.3 提问</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(answer_question(df, question=<span class="string">&quot;zrf的朋友是男性还是女性,zrf的朋友比zrf大几岁&quot;</span>))</span><br><span class="line"><span class="built_in">print</span>(answer_question(df, question=<span class="string">&quot;zrf&#x27;s friend is male or female, and how many years older is zrf&#x27;s friend than zrf?&quot;</span>))</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-回答"><a href="#3-4-回答" class="headerlink" title="3.4 回答"></a>3.4 回答</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ python3 web-qa.py </span><br><span class="line">zrf的朋友是男性，zrf的朋友比zrf大25岁。</span><br><span class="line"></span><br><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ python3 web-qa.py </span><br><span class="line">zrf<span class="string">&#x27;s friend is male and is 25 years older than zrf.</span></span><br></pre></td></tr></table></figure>
+
+<p>为啥啊?性别对了,为啥大25岁呢?<br>似乎把2023减去了1998?或者说他没有理解我的提问?</p>
+<h2 id="四-使用个人网站作为私有数据源进行提问"><a href="#四-使用个人网站作为私有数据源进行提问" class="headerlink" title="四. 使用个人网站作为私有数据源进行提问"></a>四. 使用个人网站作为私有数据源进行提问</h2><p>获取文本形式的数据是使用嵌入向量的第一步。本教程通过抓取<code>zrfyun.top</code>网站来创建一组新数据，也可以将这种技术用于自己的公司或个人网站。</p>
+<h3 id="4-1-安装依赖"><a href="#4-1-安装依赖" class="headerlink" title="4.1 安装依赖"></a>4.1 安装依赖</h3><p>请注意所有python环境都是在openai-env虚拟环境中完成的,注意不要装到系统python环境中.</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 告诉 pip 从指定的文件中读取要安装的包列表</span></span><br><span class="line">pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-构建网络爬虫"><a href="#4-2-构建网络爬虫" class="headerlink" title="4.2 构建网络爬虫"></a>4.2 构建网络爬虫</h3><p>该爬虫将从下面代码底部传入的根 URL 开始，访问每个页面，查找其他链接，并访问这些页面（只要它们具有相同的根域）。首先，导入所需的包，设置基本 URL，并定义 HTMLParser 类。</p>
+<p>爬取的数据将会存储在<code>text/zrfyun.top/</code>下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ <span class="built_in">ls</span> -al text/zrfyun.top/</span><br><span class="line">总计 1104</span><br><span class="line">drwxr-xr-x 2 zrf zrf   4096 12月16日 16:01  .</span><br><span class="line">drwxr-xr-x 3 zrf zrf   4096 12月16日 16:01  ..</span><br><span class="line">-rw-r--r-- 1 zrf zrf   6032 12月16日 16:01  rfyun.top_2023_11_19_20231120-01.txt</span><br><span class="line">-rw-r--r-- 1 zrf zrf   5921 12月16日 16:01  rfyun.top_2023_11_20_20231120-02.txt</span><br><span class="line">-rw-r--r-- 1 zrf zrf  26262 12月16日 16:01  rfyun.top_2023_11_25_backtrace.txt</span><br><span class="line">-rw-r--r-- 1 zrf zrf  31425 12月16日 16:01  rfyun.top_2023_12_03_20231203-01.txt</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment"># Regex pattern to match a URL</span></span><br><span class="line">HTTP_URL_PATTERN = <span class="string">r&#x27;^http[s]&#123;0,1&#125;://.+$&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Define OpenAI api_key</span></span><br><span class="line"><span class="comment"># openai.api_key = &#x27;&lt;Your API Key&gt;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Define root domain to crawl</span></span><br><span class="line">domain = <span class="string">&quot;zrfyun.top&quot;</span></span><br><span class="line">full_url = <span class="string">&quot;https://zrfyun.top/&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Create a class to parse the HTML and get the hyperlinks</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">HyperlinkParser</span>(<span class="title class_ inherited__">HTMLParser</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">    <span class="comment"># Override the HTMLParser&#x27;s handle_starttag method to get the hyperlinks</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">handle_starttag</span>(<span class="params">self, tag, attrs</span>):</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>下一个函数将 URL 作为参数，打开 URL，并读取 HTML 内容。然后，它返回在该页面上找到的所有超链接。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Function to get the hyperlinks from a URL</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_hyperlinks</span>(<span class="params">url</span>):</span><br><span class="line">    <span class="keyword">return</span> parser.hyperlinks</span><br></pre></td></tr></table></figure>
+
+<p>目标是仅抓取<code>zrfyun.top</code>域下的内容并为其建立索引。为此，需要一个调用 get_hyperlinks 函数但过滤掉不属于指定域的任何 URL 的函数。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Function to get the hyperlinks from a URL that are within the same domain</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_domain_hyperlinks</span>(<span class="params">local_domain, url</span>):</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">list</span>(<span class="built_in">set</span>(clean_links))</span><br></pre></td></tr></table></figure>
+
+<p><code>crawl</code>函数是网页抓取任务设置的最后一步。它会跟踪访问的 URL，以避免重复同一页面，该页面可能跨网站上的多个页面链接。它还从不带 HTML 标记的页面中提取原始文本，并将文本内容写入特定于该页面的本地 .txt 文件中。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">crawl</span>(<span class="params">url</span>):</span><br><span class="line"></span><br><span class="line">crawl(full_url)</span><br></pre></td></tr></table></figure>
+
+<p>上面示例的最后一行运行爬虫，它会遍历所有可访问的链接并将这些页面转换为文本文件。这将需要几分钟的时间来运行，具体取决于站点的大小和复杂性。</p>
+<h3 id="4-3-构建嵌入"><a href="#4-3-构建嵌入" class="headerlink" title="4.3 构建嵌入"></a>4.3 构建嵌入</h3><p><code>CSV</code>是存储嵌入的常用格式。您可以通过将原始文本文件（位于文本目录中）转换为<code>Pandas</code>数据帧来在 Python 中使用此格式。<code>Pandas</code>是一个流行的开源库，可帮助您处理表格数据（存储在行和列中的数据）。<br>空白行会使文本文件变得混乱并使其难以处理。一个简单的函数就可以删除这些行并整理文件。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">remove_newlines</span>(<span class="params">serie</span>):</span><br></pre></td></tr></table></figure>
+
+<p>将文本转换为 CSV 需要循环遍历之前创建的文本目录中的文本文件。打开每个文件后，删除多余的空格并将修改后的文本附加到列表中。然后，将删除新行的文本添加到空的 Pandas 数据框中，并将该数据框写入 CSV 文件。</p>
+<blockquote>
+<p>额外的间距和新行会使文本变得混乱并使嵌入过程复杂化。此处使用的代码有助于删除其中一些字符，但您可能会发现第三方库或其他方法有助于删除更多不必要的字符。</p>
+</blockquote>
+<p>最新的嵌入模型可以处理最多 8191 个输入标记的输入，因此大多数行不需要任何分块，但对于每个爬取的子页面来说可能并非如此，因此下一个代码块会将较长的行拆分为较小的块。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">max_tokens = 500</span><br><span class="line"></span><br><span class="line"><span class="comment"># Function to split the text into chunks of a maximum number of tokens</span></span><br><span class="line">def split_into_many(text, max_tokens = max_tokens):</span><br><span class="line"></span><br><span class="line">    <span class="built_in">return</span> chunks</span><br></pre></td></tr></table></figure>
+
+<p>内容现在被分解为更小的块，并且可以向 OpenAI API 发送一个简单的请求，指定使用新的 text-embedding-ada-002 模型来创建嵌入：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI</span><br><span class="line"></span><br><span class="line">client = OpenAI(</span><br><span class="line">    api_key=os.environ.get(<span class="string">&quot;OPENAI_API_KEY&quot;</span>),</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">df[<span class="string">&#x27;embeddings&#x27;</span>] = df.text.apply(<span class="keyword">lambda</span> x: client.embeddings.create(<span class="built_in">input</span>=x, engine=<span class="string">&#x27;text-embedding-ada-002&#x27;</span>)[<span class="string">&#x27;data&#x27;</span>][<span class="number">0</span>][<span class="string">&#x27;embedding&#x27;</span>])</span><br><span class="line"></span><br><span class="line">df.to_csv(<span class="string">&#x27;processed/embeddings.csv&#x27;</span>)</span><br><span class="line">df.head()</span><br></pre></td></tr></table></figure>
+
+<p>这应该需要一定的时间,之后我们就可以使用嵌入向量了！</p>
+<p>嵌入用csv的格式保存在<code>processed/</code>下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ <span class="built_in">ls</span> -al processed/</span><br><span class="line">总计 2744</span><br><span class="line">drwxr-xr-x 2 zrf zrf    4096 12月16日 16:07 .</span><br><span class="line">drwxr-xr-x 6 zrf zrf    4096 12月16日 16:01 ..</span><br><span class="line">-rw-r--r-- 1 zrf zrf 1762206 12月16日 16:07 embeddings.csv</span><br><span class="line">-rw-r--r-- 1 zrf zrf 1032224 12月16日 16:01 scraped.csv</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-4-使用嵌入构建问答系统"><a href="#4-4-使用嵌入构建问答系统" class="headerlink" title="4.4 使用嵌入构建问答系统"></a>4.4 使用嵌入构建问答系统</h3><p>嵌入已准备就绪，此过程的最后一步是创建一个简单的问答系统。这将接受用户的问题，创建它的嵌入，并将其与现有嵌入进行比较，以从抓取的网站中检索最相关的文本。然后，gpt-3.5-turbo-instruct 模型将根据检索到的文本生成听起来自然的答案。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">create_context</span>(<span class="params"></span></span><br><span class="line"><span class="params">    question, df, max_len=<span class="number">1800</span>, size=<span class="string">&quot;ada&quot;</span></span></span><br><span class="line"><span class="params"></span>):</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">answer_question</span>(<span class="params"></span></span><br><span class="line"><span class="params">    df,</span></span><br><span class="line"><span class="params">    model=<span class="string">&quot;text-davinci-003&quot;</span>,</span></span><br><span class="line"><span class="params">    question=<span class="string">&quot;Am I allowed to publish model outputs to Twitter, without a human review?&quot;</span>,</span></span><br><span class="line"><span class="params">    max_len=<span class="number">1800</span>,</span></span><br><span class="line"><span class="params">    size=<span class="string">&quot;ada&quot;</span>,</span></span><br><span class="line"><span class="params">    debug=<span class="literal">False</span>,</span></span><br><span class="line"><span class="params">    max_tokens=<span class="number">150</span>,</span></span><br><span class="line"><span class="params">    stop_sequence=<span class="literal">None</span></span></span><br><span class="line"><span class="params"></span>):</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(answer_question(df, question=<span class="string">&quot;非对称加密算法的一个前提和两个特性是什么&quot;</span>, debug=<span class="literal">False</span>))</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(answer_question(df, question=<span class="string">&quot;这个网站使用的http server是什么?&quot;</span>, debug=<span class="literal">False</span>))</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-5-测试结果"><a href="#4-5-测试结果" class="headerlink" title="4.5 测试结果"></a>4.5 测试结果</h3><p>让我们看看他的回答如何</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(openai-env) zrf@debian:~/git/web-crawl-q-and-a-example$ python3 web-qa.py </span><br><span class="line">一个前提是需要一对公钥和私钥，两个特性是加密和解密的过程是不同的，公钥可以公开，私钥需要保密。</span><br><span class="line">nginx.</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<ul>
+<li>用时比较久</li>
+<li>第一问回答的不好,正确答案应该是：</li>
+</ul>
+<blockquote>
+<p>一个前提：公钥可公开，私钥只有自己持有<br>两个特性：公钥加密、私钥解密；私钥加密、公钥解密</p>
+</blockquote>
+<ul>
+<li>第二问他回答<code>nginx.</code>是对的</li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://zrfyun.top">zrf</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://zrfyun.top/2023/12/16/web_qa/">http://zrfyun.top/2023/12/16/web_qa/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://zrfyun.top" target="_blank">zrfyun.top</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/OpenAI/">OpenAI</a><a class="post-meta__tags" href="/tags/Python/">Python</a></div><div class="post_share"><div class="social-share" data-image="/blog_image/web_qa/openai.jpeg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>感谢支持</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat_pay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat_pay.jpg"/></a><div class="post-qr-code-desc"></div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/01/07/asynchronousIO/" title="异步IO"><img class="cover" src="/blog_image/asynchronousIO/libevent.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">异步IO</div></div></a></div><div class="next-post pull-right"><a href="/2023/12/11/XFRM-state/" title="XFRM state"><img class="cover" src="/blog_image/XFRM-state/ipsec.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">XFRM state</div></div></a></div></nav><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">zrf</div><div class="author-info__description">求知若渴,虚心若愚</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/zrf-1998"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/zrf-1998" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:853241825@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">蹒跚学步，感谢支持</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Web-Q-A-with-Embeddings"><span class="toc-number">1.</span> <span class="toc-text">Web  Q&amp;A with Embeddings</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80-%E9%85%8D%E7%BD%AEpython%E7%8E%AF%E5%A2%83"><span class="toc-number">2.</span> <span class="toc-text">一. 配置python环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C-%E9%85%8D%E7%BD%AE%E6%9C%AC%E5%9C%B0APIKEY"><span class="toc-number">3.</span> <span class="toc-text">二. 配置本地APIKEY</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89-%E4%B8%80%E4%B8%AA%E5%B0%8F%E6%B5%8B%E8%AF%95"><span class="toc-number">4.</span> <span class="toc-text">三. 一个小测试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89-%E8%AE%A9AI%E5%88%86%E6%9E%90%E7%A7%81%E6%9C%89%E6%95%B0%E6%8D%AE"><span class="toc-number">5.</span> <span class="toc-text">三. 让AI分析私有数据</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%88%9B%E5%BB%BA%E7%A7%81%E6%9C%89%E6%95%B0%E6%8D%AE%E6%96%87%E6%A1%A3"><span class="toc-number">5.1.</span> <span class="toc-text">3.1 创建私有数据文档</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E7%94%9F%E6%88%90%E5%B5%8C%E5%85%A5%E5%90%91%E9%87%8F"><span class="toc-number">5.2.</span> <span class="toc-text">3.2 生成嵌入向量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E6%8F%90%E9%97%AE"><span class="toc-number">5.3.</span> <span class="toc-text">3.3 提问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E5%9B%9E%E7%AD%94"><span class="toc-number">5.4.</span> <span class="toc-text">3.4 回答</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B-%E4%BD%BF%E7%94%A8%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99%E4%BD%9C%E4%B8%BA%E7%A7%81%E6%9C%89%E6%95%B0%E6%8D%AE%E6%BA%90%E8%BF%9B%E8%A1%8C%E6%8F%90%E9%97%AE"><span class="toc-number">6.</span> <span class="toc-text">四. 使用个人网站作为私有数据源进行提问</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E5%AE%89%E8%A3%85%E4%BE%9D%E8%B5%96"><span class="toc-number">6.1.</span> <span class="toc-text">4.1 安装依赖</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E6%9E%84%E5%BB%BA%E7%BD%91%E7%BB%9C%E7%88%AC%E8%99%AB"><span class="toc-number">6.2.</span> <span class="toc-text">4.2 构建网络爬虫</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E6%9E%84%E5%BB%BA%E5%B5%8C%E5%85%A5"><span class="toc-number">6.3.</span> <span class="toc-text">4.3 构建嵌入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E4%BD%BF%E7%94%A8%E5%B5%8C%E5%85%A5%E6%9E%84%E5%BB%BA%E9%97%AE%E7%AD%94%E7%B3%BB%E7%BB%9F"><span class="toc-number">6.4.</span> <span class="toc-text">4.4 使用嵌入构建问答系统</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="toc-number">6.5.</span> <span class="toc-text">4.5 测试结果</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url('/url(http:/zrfyun.top/img/back.jpeg)')"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2024 By zrf</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a href="http://zrfyun.top/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><div class="js-pjax"><script>(() => {
+  const initValine = () => {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'mHV5QZzhNBabMj6y5kw2SYqq-gzGzoHsz',
+      appKey: '2fvaL99PG3kQNK15rc70qhMV',
+      avatar: 'monsterid',
+      serverURLs: 'https://mhv5qzzh.lc-cn-n1-shared.com',
+      emojiMaps: "",
+      path: window.location.pathname,
+      visitor: false
+    }, null))
+  }
+
+  const loadValine = async () => {
+    if (typeof Valine === 'function') initValine()
+    else {
+      await getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js')
+      initValine()
+    }
+  }
+
+  if ('Valine' === 'Valine' || !false) {
+    if (false) btf.loadComment(document.getElementById('vcomment'),loadValine)
+    else setTimeout(loadValine, 0)
+  } else {
+    window.loadOtherComment = loadValine
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

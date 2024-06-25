@@ -1,0 +1,336 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>非对称加密算法与CA机构 | zrfyun.top</title><meta name="author" content="zrf,853241825@qq.com"><meta name="copyright" content="zrf"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="分析非对称加密算法保护数据的场景,找出两个安全隐患,继而引出数字签名和CA机构,最后将演示如何创建CA，如何使用CA为最终实体颁发证书">
+<meta property="og:type" content="article">
+<meta property="og:title" content="非对称加密算法与CA机构">
+<meta property="og:url" content="http://zrfyun.top/2023/12/03/20231203-01/index.html">
+<meta property="og:site_name" content="zrfyun.top">
+<meta property="og:description" content="分析非对称加密算法保护数据的场景,找出两个安全隐患,继而引出数字签名和CA机构,最后将演示如何创建CA，如何使用CA为最终实体颁发证书">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zrfyun.top/blog_image/20231203-01/cover.png">
+<meta property="article:published_time" content="2023-12-03T00:32:24.000Z">
+<meta property="article:modified_time" content="2023-12-03T15:32:24.000Z">
+<meta property="article:author" content="zrf">
+<meta property="article:tag" content="strongswan">
+<meta property="article:tag" content="非对称加密算法">
+<meta property="article:tag" content="CA机构与证书">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zrfyun.top/blog_image/20231203-01/cover.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://zrfyun.top/2023/12/03/20231203-01/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '非对称加密算法与CA机构',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-12-03 23:32:24'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 7.0.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/blog_image/20231203-01/cover.png')"><nav id="nav"><span id="blog-info"><a href="/" title="zrfyun.top"><span class="site-name">zrfyun.top</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 图库</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">非对称加密算法与CA机构</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-12-03T00:32:24.000Z" title="发表于 2023-12-03 08:32:24">2023-12-03</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2023-12-03T15:32:24.000Z" title="更新于 2023-12-03 23:32:24">2023-12-03</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/IPSEC/">IPSEC</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">4.1k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>15分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="非对称加密算法与CA机构"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="一-简介"><a href="#一-简介" class="headerlink" title="一. 简介"></a>一. 简介</h2><p>加密解密过程都会用到密钥，<strong>根据在加密解密过程中使用的密钥是否相同</strong>，我们将加密解密算法分为两种：对称加密算法和非对称加密算法。本文首先介绍两种加密算法——“对称加密算法”和”非对称加密算法”。</p>
+<p>但今天的主角是<strong>非对称加密算法</strong>，我们将介绍非对称加密算法的<strong>一个前提</strong>和<strong>两个特性</strong>。</p>
+<ul>
+<li>一个前提：公钥可公开，私钥只有自己持有</li>
+<li>两个特性：公钥加密、私钥解密；私钥加密、公钥解密</li>
+</ul>
+<p>我们将以最简单的公钥加密私钥解密场景来入手，使用图解的方式分析通信双方是如何安全地进行交流。</p>
+<p>在此基础上，我们会分析这种场景下的两大安全隐患——<strong>消息源的身份认证</strong>和<strong>公钥的归属性</strong>。<br>由于无法确认消息源身份，就会导致消息被他人篡改或者消息源否认是自己发送的消息。<br>由于无法确认公钥的归属性，会导致公钥被调包，从而被第三方窃取消息。</p>
+<p>我们针对这两个问题，很自然的引出了<strong>数字签名技术</strong>和<strong>CA机构</strong>。</p>
+<p>最后，我们将使用strongswan提供的PKI工具，自己创建一个CA机构，使用自签名创建CA机构的根证书。使用CA机构的证书和私钥来为一个实体终端颁发一个”可信任的证书”。并为此证书验证合法性。</p>
+<h2 id="二-对称加密算法"><a href="#二-对称加密算法" class="headerlink" title="二. 对称加密算法"></a>二. 对称加密算法</h2><h3 id="2-1-对称加密算法定义"><a href="#2-1-对称加密算法定义" class="headerlink" title="2.1 对称加密算法定义"></a>2.1 对称加密算法定义</h3><p>对称加密算法使用相同的密钥进行加密和解密。假设明文为P，密文为C，密钥为K，E<sub>K</sub>是加密算法，D<sub>K</sub>是解密算法，则：</p>
+<ul>
+<li>加密过程可以这样表示：C &#x3D; E<sub>K</sub>(P)</li>
+<li>解密过程可以这样表示：P &#x3D; D<sub>K</sub>(C)</li>
+</ul>
+<p>可以看到，加密和解密过程都使用密钥K，我们称这个密钥K为共享密钥</p>
+<h3 id="2-2-对称加密算法使用场景"><a href="#2-2-对称加密算法使用场景" class="headerlink" title="2.2 对称加密算法使用场景"></a>2.2 对称加密算法使用场景</h3><p>我们假设A与B想要进行加密交流，那么他们一定会有一个分享密钥K的过程。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">A           ----共享密钥K-----&gt;         B         </span><br></pre></td></tr></table></figure>
+
+<p>此后A将使用共享密钥K对信息进行加密，再发给B。<br>B收到密文后，先用共享密钥进行解密，就可以得到明文了。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">A  </span><br><span class="line">    C = E(P) </span><br><span class="line">            ----密文传输------&gt;  </span><br><span class="line">                            P = D(C)   </span><br><span class="line">                                        B</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-3-隐患"><a href="#2-3-隐患" class="headerlink" title="2.3 隐患"></a>2.3 隐患</h3><p>如果有一个窃听者C，截获了共享密钥K，那么他不仅可以查看明文，甚至可以修改明文。<br>所以对称加密中<strong>对共享密钥的保护是至关重要的</strong>。</p>
+<h2 id="三-非对称加密算法"><a href="#三-非对称加密算法" class="headerlink" title="三. 非对称加密算法"></a>三. 非对称加密算法</h2><h3 id="3-1-非对称加密算法定义"><a href="#3-1-非对称加密算法定义" class="headerlink" title="3.1 非对称加密算法定义"></a>3.1 非对称加密算法定义</h3><p>非对称加密算法有两个密钥，称为公钥(K<sub>公</sub>)和私钥(K<sub>私</sub>)。<br>非对称加密算法有<strong>两个重要的特性</strong>：</p>
+<ul>
+<li>对明文使用公钥加密、可以使用私钥进行解密</li>
+<li>对明文使用私钥加密、可以使用公钥进行解密</li>
+</ul>
+<p>非对称加密算法还有<strong>一个重要前提</strong>，公钥是可以公开给所有人的，私钥只有自己持有，他人不应该获得。</p>
+<p>我们接下来介绍使用非对称加密方式来保护通信安全的场景。</p>
+<h3 id="3-2-加密场景"><a href="#3-2-加密场景" class="headerlink" title="3.2 加密场景"></a>3.2 加密场景</h3><p>加密场景使用的特性是<strong>公钥加密、私钥解密</strong><br>根据非对称加密算法的重要前提——公钥可公开、私钥只有自己持有。这意味着A、B、C都持有B的公钥。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">        A                   B                       C</span><br><span class="line">|-----------|           |-----------|           |-----------|</span><br><span class="line">| pubkey(B) |           | pubkey(B) |           | pubkey(B) |</span><br><span class="line">|           |           | prikey(B) |           |           |</span><br><span class="line">|-----------|           |-----------|           |-----------|</span><br></pre></td></tr></table></figure>
+
+<p>A想要向B发送一条加密消息，只需要使用B的公钥对消息进行加密，发送给B即可。<br>B收到消息后使用自己的私钥解密，就可以得到明文。而C由于没有B的私钥，所以无法解密，这样就保证了通信的安全。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">A</span><br><span class="line">    使用公钥B加密消息</span><br><span class="line">                ------------&gt;</span><br><span class="line">                        使用私钥B解密</span><br><span class="line">                                            B</span><br><span class="line"></span><br><span class="line">                ------------&gt;</span><br><span class="line">                        没有私钥B、无法解密</span><br><span class="line">                                            C</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-加密场景的隐患"><a href="#3-3-加密场景的隐患" class="headerlink" title="3.3 加密场景的隐患"></a>3.3 加密场景的隐患</h3><p>以上场景并不是无懈可击的，C无法解密的前提的A在加密时使用了正确的公钥B，如果在A加密前，C将A手中的公钥B调包为了公钥C又会如何呢？</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">        A                   B                       C</span><br><span class="line">|-----------|           |-----------|           |-----------|</span><br><span class="line">| pubkey(C) |           | pubkey(B) |           | pubkey(B) |</span><br><span class="line">|           |           | prikey(B) |           | prikey(C) |</span><br><span class="line">|-----------|           |-----------|           |-----------|</span><br></pre></td></tr></table></figure>
+
+<p>A在使用公钥加密时使用了错误的公钥C，那么C就可以使用自己得私钥C来解密这条消息（如下图）。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">A</span><br><span class="line">    使用公钥C加密消息</span><br><span class="line">                ------------&gt;</span><br><span class="line">                        使用私钥B解密</span><br><span class="line">                                            B   (解密失败)</span><br><span class="line"></span><br><span class="line">                ------------&gt;</span><br><span class="line">                        使用私钥C解密</span><br><span class="line">                                            C   （窃听成功）</span><br></pre></td></tr></table></figure>
+
+<p>此时，C窃听到了A发给B的消息，更可怕的是C也有B的公钥，意味着C不仅可以窃听、还可以篡改消息（如下图），将篡改后的消息使用公钥B加密，发给B。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">C(窃听者)</span><br><span class="line">    篡改消息，使用公钥B加密</span><br><span class="line">                ------------&gt;</span><br><span class="line">                        使用私钥B解密</span><br><span class="line">                                            B   (获取到被篡改的消息)</span><br></pre></td></tr></table></figure>
+
+<p>这其实是两种隐患，<strong>前一个隐患产生的原因是A无法核实手中的公钥的归属，而后者隐患产生的原因是B无法核实消息来源</strong>。<br>接下来，我们将根据这两个安全隐患，一一进行解决.</p>
+<h2 id="四-数字签名"><a href="#四-数字签名" class="headerlink" title="四. 数字签名"></a>四. 数字签名</h2><h3 id="4-1-签名介绍"><a href="#4-1-签名介绍" class="headerlink" title="4.1 签名介绍"></a>4.1 签名介绍</h3><p>数字签名技术就是为了<strong>解决信息完整性、身份认证和非否认性等问题</strong>而设计的。</p>
+<p>签名场景使用了非对称加密算法的特性是<strong>私钥加密、公钥解密</strong></p>
+<h3 id="4-2-使用场景"><a href="#4-2-使用场景" class="headerlink" title="4.2 使用场景"></a>4.2 使用场景</h3><p>根据非对称加密算法的重要前提——公钥可公开、私钥只有自己持有。这意味着私钥A只有自己持有，B和C都没有。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">        A                   B                       C</span><br><span class="line">|-----------|           |-----------|           |-----------|</span><br><span class="line">| pubkey(B) |           | pubkey(B) |           | pubkey(B) |</span><br><span class="line">| prikey(A) |           | prikey(B) |           | prikey(C) |</span><br><span class="line">|-----------|           |-----------|           |-----------|</span><br></pre></td></tr></table></figure>
+
+<p>B由于收到了被篡改的消息，但是A又不承认那个消息是自己发的，所以现在B要求，在开始会话前要首先验证会话发起者的身份，也就是要求A进行<strong>签名</strong>。<br>签名的过程是这样的：</p>
+<p>A将自己的身份”我是A”当作明文，使用<strong>仅自己持有的私钥A进行加密</strong>。密文发给B之后，<strong>B使用A的公钥进行解密</strong>，可以得到明文”我是A”。这样，A就无法抵赖了。同时B也确定了会话的发起者确实是A，不会被C误导。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">A</span><br><span class="line">    使用私钥A加密&quot;我是A&quot;</span><br><span class="line">                ------------&gt;</span><br><span class="line">                        使用公钥A解密</span><br><span class="line">                                            B   （得到&quot;我是A&quot;，确认对端身份）</span><br><span class="line">C</span><br><span class="line">    使用私钥C加密&quot;我是A&quot;</span><br><span class="line">                ------------&gt;</span><br><span class="line">                        使用私钥A解密</span><br><span class="line">                                            B   （解密失败，确认对端身份存疑）</span><br></pre></td></tr></table></figure>
+
+<h2 id="五-CA权威机构"><a href="#五-CA权威机构" class="headerlink" title="五. CA权威机构"></a>五. CA权威机构</h2><h3 id="5-1-解决公钥归属问题"><a href="#5-1-解决公钥归属问题" class="headerlink" title="5.1 解决公钥归属问题"></a>5.1 解决公钥归属问题</h3><p>我们使用数字签名可以校验数据的所有者。但是现在还剩下一个问题——如何确定公钥的归属？<br>这就需要<strong>引入一个第三方机构</strong>，该机构有足够的权威性，可以得到所有人的信任——<strong>CA</strong>机构。</p>
+<p>还记得我们这个隐患是怎么产生的吗？<br>A使用了错误的公钥C（本应该使用公钥B），并将数据加密，被C截获流量后使用自己的私钥C进行解密导致了消息泄漏。</p>
+<p>现在A吃一堑长一智，他在<strong>加密前会先向CA机构确认一下手里的公钥是否是B的</strong>，由于CA有足够的权威，如果A得到CA的确认，说这个公钥确实是公钥B，那么A就可以放心地使用这个公钥来加密数据。如果CA说这个公钥不是B的，A就意识到了自己持有一个不被信任的公钥。就不会使用这个公钥了。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">A</span><br><span class="line">        这个公钥是pubkeyB吗？</span><br><span class="line">                    ------------------&gt;</span><br><span class="line">                                                        CA</span><br><span class="line">                                    这个公钥被我信任</span><br><span class="line">                    &lt;------------------</span><br><span class="line">A</span><br><span class="line">        使用公钥加密数据</span><br><span class="line">                    ------------------&gt;</span><br><span class="line">                                    使用私钥B解密</span><br><span class="line">                                                        B   （得到明文）</span><br><span class="line"></span><br><span class="line">        这个公钥是pubkeyB吗？</span><br><span class="line">                    ------------------&gt;</span><br><span class="line">                                                        CA</span><br><span class="line">                                    这个公钥我不认识</span><br><span class="line">                    &lt;------------------             </span><br><span class="line">A  （异常公钥）</span><br></pre></td></tr></table></figure>
+
+<p>至此，关于公钥归属的问题通过引入一个权威机构CA解决了，但实际上针对公钥的归属问题，并不是向上文一样在使用时咨询CA机构。接下来我们介绍证书。</p>
+<h3 id="5-2-证书"><a href="#5-2-证书" class="headerlink" title="5.2 证书"></a>5.2 证书</h3><p>在实际场景中，<strong>公钥是以一种称为证书的形式来公之于众</strong>的。证书记录了这个公钥的持有者的很多身份信息，例如国家、省市、IP、域名信息、合法日期等。<br>这里我举一个例子：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">zrf@ubuntu:~/git/strongswan/testing/hosts/moon/etc/swanctl/x509$ pki --<span class="built_in">print</span> --<span class="keyword">in</span> moonCert.pem </span><br><span class="line">  subject:  <span class="string">&quot;C=CH, O=strongSwan Project, CN=moon.strongswan.org&quot;</span></span><br><span class="line">  issuer:   <span class="string">&quot;C=CH, O=strongSwan Project, CN=strongSwan Root CA&quot;</span></span><br><span class="line">  validity:  not before Nov 29 11:21:11 2023, ok</span><br><span class="line">             not after  Nov 29 11:21:11 2031, ok (expires <span class="keyword">in</span> 2915 days)</span><br><span class="line">  serial:    03</span><br><span class="line">  altNames:  moon.strongswan.org</span><br><span class="line">  flags:     </span><br><span class="line">  CRL URIs:  http://crl.strongswan.org/strongswan.crl</span><br><span class="line">  authkeyId: 77:9c:16:d3:9c:25:d1:c4:5e:84:7c:8b:40:a5:1e:c6:f9:c0:de:6a</span><br><span class="line">  subjkeyId: 84:81:42:19:2c:83:49:f2:8e:0b:cb:03:c0:f5:ac:a2:87:7e:b8:0c</span><br><span class="line">  pubkey:    RSA 3072 bits</span><br><span class="line">  keyid:     5d:33:7b:8c:da:39:82:57:f6:67:6c:38:95:8c:15:ea:d7:e4:c8:3d</span><br><span class="line">  subjkey:   84:81:42:19:2c:83:49:f2:8e:0b:cb:03:c0:f5:ac:a2:87:7e:b8:0c</span><br></pre></td></tr></table></figure>
+
+<p>这个证书记录了公钥信息和公钥属主信息，但是为了确保这种信息的正确的，<strong>每个合法证书都由权威机构CA签发</strong>，并且在证书中也可以查得到签发机构。</p>
+<p>例如上面的属于<code>&quot;C=CH, O=strongSwan Project, CN=moon.strongswan.org&quot;</code>的证书是由<code>&quot;C=CH, O=strongSwan Project, CN=strongSwan Root CA&quot;</code>签发的。可以看到还有合法日期<code>not before Nov 29 11:21:11 2023</code>和<code>not after  Nov 29 11:21:11 2031</code>。还包括了属主的域名信息<code>moon.strongswan.org</code>。</p>
+<h3 id="5-3-颁发证书"><a href="#5-3-颁发证书" class="headerlink" title="5.3 颁发证书"></a>5.3 颁发证书</h3><p>在实际场景中，B会先生成自己的私钥，接下来将公钥和自己的身份进行绑定，生成一个未经CA机构签名的证书。</p>
+<p>他需要向CA机构提交申请，希望得到CA的认证。</p>
+<p>CA机构在审核之后如果发现公钥和公钥属主信息真实，就会使用自己的私钥对这个证书进行签名，B就得到了一个被权威机构信任的证书，此时，就可以向外界公布自己的证书了。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">B</span><br><span class="line">        将公钥和个人信息绑定生成未经认证的证书</span><br><span class="line">                    --------------------------------------&gt;         </span><br><span class="line">                                                        审核证书</span><br><span class="line">                                                                        CA</span><br><span class="line">                                        使用CA的私钥签名，颁发合法证书</span><br><span class="line">                    &lt;-------------------------------------</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-4-验证证书"><a href="#5-4-验证证书" class="headerlink" title="5.4 验证证书"></a>5.4 验证证书</h3><p>至此，我们了解到，对于验证者A，他并不是直接持有B的公钥，而是持有B的证书，B的证书中有B的身份信息和颁发证书的权威机构CA的名字。</p>
+<p>所以当A使用这个证书时，会首先确认下这个证书是否合法——<strong>即验证这个证书否经过CA机构的认可</strong>。</p>
+<p>这个过程也很简单，每个被签发的证书都会被权威机构签名——权威机构使用自己的私钥加密这个证书的一部分。</p>
+<p>A可以<strong>使用CA机构的公钥来验证签名</strong>，如果验签成功，意味着这个证书被权威机构认为是合法的正确的。所以，A就可以信任证书中的身份和公钥。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">A</span><br><span class="line">        使用CA的公钥验签</span><br><span class="line">                ------------------&gt; </span><br><span class="line">                            验签成功</span><br><span class="line">                                            证书可信任</span><br><span class="line"></span><br><span class="line">        使用CA的公钥验签</span><br><span class="line">                ------------------&gt; </span><br><span class="line">                            验签不成功</span><br><span class="line">                                            证书不可信</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-5-信任链"><a href="#5-5-信任链" class="headerlink" title="5.5 信任链"></a>5.5 信任链</h3><p>当一个实体（例如，网站）提供其数字证书时，该证书通常由某个CA签发。为了建立对这个证书的信任，验证者需要检查证书是否由受信任的CA签发，以及中间是否有其他CA签发的证书。这一系列的证书链构成了信任链。</p>
+<p>信任链的验证过程如下：</p>
+<ul>
+<li><p>根证书： 验证者首先查看证书链中的根证书，这是信任的起点。根证书是预先安装在操作系统或应用程序中的。</p>
+</li>
+<li><p>中间证书： 验证者检查目标证书是否由某个受信任的CA签发。如果是，验证者将查找该CA的证书（中间证书），并验证它的合法性。</p>
+</li>
+<li><p>目标证书： 最终，验证者检查目标证书，确保它是由中间证书签发的，并且中间证书是由根证书签发的。如果所有证书都是有效的，且目标证书的签名有效，则建立了信任。</p>
+</li>
+</ul>
+<h2 id="六-创建CA并颁布证书实验"><a href="#六-创建CA并颁布证书实验" class="headerlink" title="六. 创建CA并颁布证书实验"></a>六. 创建CA并颁布证书实验</h2><h3 id="5-1-创建一个CA"><a href="#5-1-创建一个CA" class="headerlink" title="5.1 创建一个CA"></a>5.1 创建一个CA</h3><p>我使用的是strongswan提供的PKI命令行</p>
+<ul>
+<li>使用<code>pki --gen</code>生成一个类型的<code>ed25519</code>的密钥，其中type可选<code>rsa|ecdsa|ed25519|ed448|bliss</code>，这是CA机构的私钥，一定要保存好。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">zrf@debian:/tmp$ pki --gen --<span class="built_in">type</span> ed25519 --outform pem &gt; strongswanKey.pem</span><br><span class="line">zrf@debian:/tmp$ <span class="built_in">cat</span> strongswanKey.pem </span><br><span class="line">-----BEGIN PRIVATE KEY-----</span><br><span class="line">MC4CAQAwBQYDK2VwBCIEIK0uCyvAxja4l+XcViuofSQwZXPjgAw4CTEfAk2q5vUe</span><br><span class="line">-----END PRIVATE KEY-----</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>使用<code>pki --self</code>命令将相应的公钥打包成自签名的CA证书，其生命周期为 10 年（3652 天）</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">zrf@debian:/tmp$ pki --self --ca --lifetime 3652 --<span class="keyword">in</span> strongswanKey.pem \</span><br><span class="line">           --dn <span class="string">&quot;C=CH, O=strongSwan, CN=strongSwan Root CA&quot;</span> \</span><br><span class="line">           --outform pem &gt; strongswanCert.pem</span><br><span class="line">zrf@debian:/tmp$ <span class="built_in">cat</span> strongswanCert.pem </span><br><span class="line">-----BEGIN CERTIFICATE-----</span><br><span class="line">MIIBdjCCASigAwIBAgIIdpbqQE52YcUwBQYDK2VwMD8xCzAJBgNVBAYTAkNIMRMw</span><br><span class="line">EQYDVQQKEwpzdHJvbmdTd2FuMRswGQYDVQQDExJzdHJvbmdTd2FuIFJvb3QgQ0Ew</span><br><span class="line">HhcNMjMxMjA1MTEwNDA3WhcNMzMxMjA0MTEwNDA3WjA/MQswCQYDVQQGEwJDSDET</span><br><span class="line">MBEGA1UEChMKc3Ryb25nU3dhbjEbMBkGA1UEAxMSc3Ryb25nU3dhbiBSb290IENB</span><br><span class="line">MCowBQYDK2VwAyEA+g2agkMD3vbinYSC4zN+3sCxmURttTCW09yWKFkxmNKjQjBA</span><br><span class="line">MA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMB0GA1UdDgQWBBRc9qnq</span><br><span class="line">ufZKbAfoGlKP6oidsEWPDTAFBgMrZXADQQA+7lHofkL3XZwBAyJ8HD+6RMw9LHlN</span><br><span class="line">YcLRROfzUHma3m0ExR1I6mg5YNxUBNXc3jh2/CIOGY65Ma8Z9zjwWWIO</span><br><span class="line">-----END CERTIFICATE-----</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>使用<code>pki --print</code>命令打印证书：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">zrf@debian:/tmp$ pki --<span class="built_in">print</span> --<span class="keyword">in</span> strongswanCert.pem</span><br><span class="line">  subject:  <span class="string">&quot;C=CH, O=strongSwan, CN=strongSwan Root CA&quot;</span></span><br><span class="line">  issuer:   <span class="string">&quot;C=CH, O=strongSwan, CN=strongSwan Root CA&quot;</span></span><br><span class="line">  validity:  not before Dec 05 19:04:07 2023, ok</span><br><span class="line">             not after  Dec 04 19:04:07 2033, ok (expires <span class="keyword">in</span> 3651 days)</span><br><span class="line">  serial:    76:96:ea:40:4e:76:61:c5</span><br><span class="line">  flags:     CA CRLSign self-signed </span><br><span class="line">  subjkeyId: 5c:f6:a9:ea:b9:f6:4a:6c:07:e8:1a:52:8f:ea:88:9d:b0:45:8f:0d</span><br><span class="line">  pubkey:    ED25519 256 bits</span><br><span class="line">  keyid:     45:2f:1d:0b:28:7f:6f:9f:1d:09:96:7b:d6:ed:d1:02:d5:d1:b0:c8</span><br><span class="line">  subjkey:   5c:f6:a9:ea:b9:f6:4a:6c:07:e8:1a:52:8f:ea:88:9d:b0:45:8f:0d</span><br></pre></td></tr></table></figure>
+
+<p>至此，我们就生成了自签名的CA证书，作为我们信任链的根证书</p>
+<h3 id="5-2-为一个实体创建私钥"><a href="#5-2-为一个实体创建私钥" class="headerlink" title="5.2 为一个实体创建私钥"></a>5.2 为一个实体创建私钥</h3><p>现在我们为一个实体moon创建证书</p>
+<ul>
+<li>使用<code>pki --gen</code>命令创建一个类型为ed25519的私钥</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">zrf@debian:/tmp$ pki --gen --<span class="built_in">type</span> ed25519 --outform pem &gt; moonKey.pem</span><br><span class="line">zrf@debian:/tmp$ <span class="built_in">cat</span> moonKey.pem </span><br><span class="line">-----BEGIN PRIVATE KEY-----</span><br><span class="line">MC4CAQAwBQYDK2VwBCIEICK+zDZ22cxz0c1mqs76+3ujfkIN3rOAlMK7QNZavBSa</span><br><span class="line">-----END PRIVATE KEY-----</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>使用<code>pki --print --type</code>来打印私钥</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">zrf@debian:/tmp$ pki --<span class="built_in">print</span> --<span class="built_in">type</span> ed25519 --<span class="keyword">in</span> moonKey.pem</span><br><span class="line">  privkey:   ED25519 256 bits</span><br><span class="line">  keyid:     5b:4a:c8:a6:d4:21:8d:6c:08:1b:c2:17:c4:ef:e2:04:c3:40:42:48</span><br><span class="line">  subjkey:   f3:02:c2:ba:0b:d7:97:53:b5:cc:ce:cb:8b:46:22:58:a4:2b:d6:c0</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-3-向CA提出证书请求"><a href="#5-3-向CA提出证书请求" class="headerlink" title="5.3 向CA提出证书请求"></a>5.3 向CA提出证书请求</h3><ul>
+<li>使用<code>pki --req</code>向CA提出一个创建证书的请求，次过程中将私钥公钥和实体信息进行绑定</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">zrf@debian:/tmp$ pki --req --<span class="built_in">type</span> priv --<span class="keyword">in</span> moonKey.pem \</span><br><span class="line">          --dn <span class="string">&quot;C=CH, O=strongswan, CN=moon.strongswan.org&quot;</span> \</span><br><span class="line">          --san moon.strongswan.org --outform pem &gt; moonReq.pem</span><br><span class="line">zrf@debian:/tmp$ <span class="built_in">cat</span> moonReq.pem </span><br><span class="line">-----BEGIN CERTIFICATE REQUEST-----</span><br><span class="line">MIHxMIGkAgEAMEAxCzAJBgNVBAYTAkNIMRMwEQYDVQQKEwpzdHJvbmdzd2FuMRww</span><br><span class="line">GgYDVQQDExNtb29uLnN0cm9uZ3N3YW4ub3JnMCowBQYDK2VwAyEAaidKIJJYTIwx</span><br><span class="line">HCnBX8YplBgMm0CcAuaytEsRyvXgMqqgMTAvBgkqhkiG9w0BCQ4xIjAgMB4GA1Ud</span><br><span class="line">EQQXMBWCE21vb24uc3Ryb25nc3dhbi5vcmcwBQYDK2VwA0EARVPxH4pSTKqNeKdj</span><br><span class="line">5cBopNMVk5h07BT2cM0U/J53rxf/jYFitRxvbHhMEumea53mnT9for2Mx6M3Yp0E</span><br><span class="line">ARasDg==</span><br><span class="line">-----END CERTIFICATE REQUEST-----</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-4-CA为实体颁发证书"><a href="#5-4-CA为实体颁发证书" class="headerlink" title="5.4 CA为实体颁发证书"></a>5.4 CA为实体颁发证书</h3><ul>
+<li>使用<code>pki --issue</code>命令，基于moonReq.pem请求，CA将颁发moon实体的证书，可以看到我们需要CA的证书和私钥来一起完成这个动作</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">zrf@debian:/tmp$ pki --issue --cacert strongswanCert.pem --cakey strongswanKey.pem \</span><br><span class="line">            --<span class="built_in">type</span> pkcs10 --<span class="keyword">in</span> moonReq.pem --serial 01 --lifetime 1826 \</span><br><span class="line">            --outform pem &gt; moonCert.pem</span><br><span class="line"></span><br><span class="line">zrf@debian:/tmp$ <span class="built_in">cat</span> moonCert.pem </span><br><span class="line">-----BEGIN CERTIFICATE-----</span><br><span class="line">MIIBcTCCASOgAwIBAgIBATAFBgMrZXAwPzELMAkGA1UEBhMCQ0gxEzARBgNVBAoT</span><br><span class="line">CnN0cm9uZ1N3YW4xGzAZBgNVBAMTEnN0cm9uZ1N3YW4gUm9vdCBDQTAeFw0yMzEy</span><br><span class="line">MDUxMTIwMzRaFw0yODEyMDQxMTIwMzRaMEAxCzAJBgNVBAYTAkNIMRMwEQYDVQQK</span><br><span class="line">EwpzdHJvbmdzd2FuMRwwGgYDVQQDExNtb29uLnN0cm9uZ3N3YW4ub3JnMCowBQYD</span><br><span class="line">K2VwAyEAaidKIJJYTIwxHCnBX8YplBgMm0CcAuaytEsRyvXgMqqjQzBBMB8GA1Ud</span><br><span class="line">IwQYMBaAFFz2qeq59kpsB+gaUo/qiJ2wRY8NMB4GA1UdEQQXMBWCE21vb24uc3Ry</span><br><span class="line">b25nc3dhbi5vcmcwBQYDK2VwA0EAYYzVbyuGOWHGCJ2DHcSl24+WzkaC/7D8kjg/</span><br><span class="line">ymPYLF1of31Sdm/Z9zLT0gFUBBWZt5ckHGoaURgFYdOgEdgzCQ==</span><br><span class="line">-----END CERTIFICATE-----</span><br><span class="line"></span><br><span class="line">zrf@debian:/tmp$ pki --<span class="built_in">print</span> --<span class="keyword">in</span> moonCert.pem </span><br><span class="line">  subject:  <span class="string">&quot;C=CH, O=strongswan, CN=moon.strongswan.org&quot;</span></span><br><span class="line">  issuer:   <span class="string">&quot;C=CH, O=strongSwan, CN=strongSwan Root CA&quot;</span></span><br><span class="line">  validity:  not before Dec 05 19:20:34 2023, ok</span><br><span class="line">             not after  Dec 04 19:20:34 2028, ok (expires <span class="keyword">in</span> 1825 days)</span><br><span class="line">  serial:    01</span><br><span class="line">  altNames:  moon.strongswan.org</span><br><span class="line">  flags:     </span><br><span class="line">  authkeyId: 5c:f6:a9:ea:b9:f6:4a:6c:07:e8:1a:52:8f:ea:88:9d:b0:45:8f:0d</span><br><span class="line">  subjkeyId: f3:02:c2:ba:0b:d7:97:53:b5:cc:ce:cb:8b:46:22:58:a4:2b:d6:c0</span><br><span class="line">  pubkey:    ED25519 256 bits</span><br><span class="line">  keyid:     5b:4a:c8:a6:d4:21:8d:6c:08:1b:c2:17:c4:ef:e2:04:c3:40:42:48</span><br><span class="line">  subjkey:   f3:02:c2:ba:0b:d7:97:53:b5:cc:ce:cb:8b:46:22:58:a4:2b:d6:c0</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-5-验证实体证书"><a href="#5-5-验证实体证书" class="headerlink" title="5.5 验证实体证书"></a>5.5 验证实体证书</h3><ul>
+<li>使用<code>pki --verify</code>来验证一个证书是否被CA信任</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">zrf@debian:/tmp$ pki --verify  --<span class="keyword">in</span> moonCert.pem --cacert strongswanCert.pem </span><br><span class="line">  using certificate <span class="string">&quot;C=CH, O=strongswan, CN=moon.strongswan.org&quot;</span></span><br><span class="line">  using trusted ca certificate <span class="string">&quot;C=CH, O=strongSwan, CN=strongSwan Root CA&quot;</span></span><br><span class="line">  reached self-signed root ca with a path length of 0</span><br><span class="line">certificate trusted, lifetimes valid</span><br></pre></td></tr></table></figure>
+
+<p>至此，我们就完成了CA的创建、使用CA为最终实体创建、颁发、验证证书的所有流程。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://zrfyun.top">zrf</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://zrfyun.top/2023/12/03/20231203-01/">http://zrfyun.top/2023/12/03/20231203-01/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://zrfyun.top" target="_blank">zrfyun.top</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/strongswan/">strongswan</a><a class="post-meta__tags" href="/tags/%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95/">非对称加密算法</a><a class="post-meta__tags" href="/tags/CA%E6%9C%BA%E6%9E%84%E4%B8%8E%E8%AF%81%E4%B9%A6/">CA机构与证书</a></div><div class="post_share"><div class="social-share" data-image="/blog_image/20231203-01/cover.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>感谢支持</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat_pay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat_pay.jpg"/></a><div class="post-qr-code-desc"></div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/12/11/XFRM-state/" title="XFRM state"><img class="cover" src="/blog_image/XFRM-state/ipsec.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">XFRM state</div></div></a></div><div class="next-post pull-right"><a href="/2023/11/25/backtrace/" title="基于backtrace和BFD的栈回溯"><img class="cover" src="/blog_image/20231125-01/backtrace.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">基于backtrace和BFD的栈回溯</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2024/03/30/IKEv1_pubkey_auth/" title="IKEv1中的证书认证详述(SM2国密证书)"><img class="cover" src="/blog_image/20231203-01/cover.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-30</div><div class="title">IKEv1中的证书认证详述(SM2国密证书)</div></div></a></div><div><a href="/2023/12/11/XFRM-state/" title="XFRM state"><img class="cover" src="/blog_image/XFRM-state/ipsec.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-11</div><div class="title">XFRM state</div></div></a></div><div><a href="/2024/05/26/trace_esp/" title="Trace ESP Packet"><img class="cover" src="/blog_image/XFRM-state/ipsec.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-05-26</div><div class="title">Trace ESP Packet</div></div></a></div><div><a href="/2024/01/19/vici/" title="Versatile IKE Control Interface"><img class="cover" src="/blog_image/XFRM-state/ipsec.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-01-19</div><div class="title">Versatile IKE Control Interface</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">zrf</div><div class="author-info__description">求知若渴,虚心若愚</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/zrf-1998"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/zrf-1998" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:853241825@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">蹒跚学步，感谢支持</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80-%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">一. 简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C-%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95"><span class="toc-number">2.</span> <span class="toc-text">二. 对称加密算法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E5%AE%9A%E4%B9%89"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 对称加密算法定义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 对称加密算法使用场景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E9%9A%90%E6%82%A3"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 隐患</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89-%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95"><span class="toc-number">3.</span> <span class="toc-text">三. 非对称加密算法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E5%AE%9A%E4%B9%89"><span class="toc-number">3.1.</span> <span class="toc-text">3.1 非对称加密算法定义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E5%8A%A0%E5%AF%86%E5%9C%BA%E6%99%AF"><span class="toc-number">3.2.</span> <span class="toc-text">3.2 加密场景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E5%8A%A0%E5%AF%86%E5%9C%BA%E6%99%AF%E7%9A%84%E9%9A%90%E6%82%A3"><span class="toc-number">3.3.</span> <span class="toc-text">3.3 加密场景的隐患</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B-%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8D"><span class="toc-number">4.</span> <span class="toc-text">四. 数字签名</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E7%AD%BE%E5%90%8D%E4%BB%8B%E7%BB%8D"><span class="toc-number">4.1.</span> <span class="toc-text">4.1 签名介绍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-number">4.2.</span> <span class="toc-text">4.2 使用场景</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94-CA%E6%9D%83%E5%A8%81%E6%9C%BA%E6%9E%84"><span class="toc-number">5.</span> <span class="toc-text">五. CA权威机构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E8%A7%A3%E5%86%B3%E5%85%AC%E9%92%A5%E5%BD%92%E5%B1%9E%E9%97%AE%E9%A2%98"><span class="toc-number">5.1.</span> <span class="toc-text">5.1 解决公钥归属问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E8%AF%81%E4%B9%A6"><span class="toc-number">5.2.</span> <span class="toc-text">5.2 证书</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-%E9%A2%81%E5%8F%91%E8%AF%81%E4%B9%A6"><span class="toc-number">5.3.</span> <span class="toc-text">5.3 颁发证书</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-%E9%AA%8C%E8%AF%81%E8%AF%81%E4%B9%A6"><span class="toc-number">5.4.</span> <span class="toc-text">5.4 验证证书</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-%E4%BF%A1%E4%BB%BB%E9%93%BE"><span class="toc-number">5.5.</span> <span class="toc-text">5.5 信任链</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD-%E5%88%9B%E5%BB%BACA%E5%B9%B6%E9%A2%81%E5%B8%83%E8%AF%81%E4%B9%A6%E5%AE%9E%E9%AA%8C"><span class="toc-number">6.</span> <span class="toc-text">六. 创建CA并颁布证书实验</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AACA"><span class="toc-number">6.1.</span> <span class="toc-text">5.1 创建一个CA</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E4%B8%BA%E4%B8%80%E4%B8%AA%E5%AE%9E%E4%BD%93%E5%88%9B%E5%BB%BA%E7%A7%81%E9%92%A5"><span class="toc-number">6.2.</span> <span class="toc-text">5.2 为一个实体创建私钥</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-%E5%90%91CA%E6%8F%90%E5%87%BA%E8%AF%81%E4%B9%A6%E8%AF%B7%E6%B1%82"><span class="toc-number">6.3.</span> <span class="toc-text">5.3 向CA提出证书请求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-CA%E4%B8%BA%E5%AE%9E%E4%BD%93%E9%A2%81%E5%8F%91%E8%AF%81%E4%B9%A6"><span class="toc-number">6.4.</span> <span class="toc-text">5.4 CA为实体颁发证书</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-%E9%AA%8C%E8%AF%81%E5%AE%9E%E4%BD%93%E8%AF%81%E4%B9%A6"><span class="toc-number">6.5.</span> <span class="toc-text">5.5 验证实体证书</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url('/url(http:/zrfyun.top/img/back.jpeg)')"><div id="footer-wrap"><div class="copyright">&copy;2023 - 2024 By zrf</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">Hi, welcome to my <a href="http://zrfyun.top/">blog</a>!</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><div class="js-pjax"><script>(() => {
+  const initValine = () => {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: 'mHV5QZzhNBabMj6y5kw2SYqq-gzGzoHsz',
+      appKey: '2fvaL99PG3kQNK15rc70qhMV',
+      avatar: 'monsterid',
+      serverURLs: 'https://mhv5qzzh.lc-cn-n1-shared.com',
+      emojiMaps: "",
+      path: window.location.pathname,
+      visitor: false
+    }, null))
+  }
+
+  const loadValine = async () => {
+    if (typeof Valine === 'function') initValine()
+    else {
+      await getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js')
+      initValine()
+    }
+  }
+
+  if ('Valine' === 'Valine' || !false) {
+    if (false) btf.loadComment(document.getElementById('vcomment'),loadValine)
+    else setTimeout(loadValine, 0)
+  } else {
+    window.loadOtherComment = loadValine
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
